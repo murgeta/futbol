@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programacion</title>
+    <style>
+        *{
+            background-color: black;
+        }
+
+        .form button{
+            color: white;
+            margin: auto;
+            display: flex;
+            width: 150px;
+            height: 30px;
+            justify-content: center;
+            border-color: green;
+            border-radius: 30px;
+        }
+        .form button:hover{
+            background-color: green;
+            transition: 0.2s;
+        }
+        .form input{
+            color: white;
+            margin: auto;
+            text-align: center;
+            align-content: center;
+            position: relative;
+            display: flex;
+            border: 2px,2px;
+            border-color: white;
+            border-radius: 15px;
+            height: 30px;
+        }
+        .form input:active{
+            width: 300px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="form">
+    <input id="name-1" type="text" placeholder="Ingresa tu Nombre"><br>
+    <input id="name-2" type="text" placeholder="Ingresa tu Apellido"><br>
+    <input id="name-3" type="text" placeholder="Ingresa su Nacionalidad"><br>
+    <button type="submit" onclick="nameSystem()">Enviar</button>
+</div>
+
+</body>
+</html>
+
+<script>
+    function nameSystem(){
+
+        let name = document.getElementById("name-1").value;
+        let surname = document.getElementById("name-2").value;
+        let country = document.getElementById("name-3").value;
+
+
+        if(name == "" || surname == "" || country == "")
+    {
+
+        alert("Datos incompletos, intentalo mas tarde");
+        
+    }
+
+</script>
