@@ -1,149 +1,985 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Cartas Aéreas SUMU</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background: #f9f9f9;
-    color: #222;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-  }
-  nav {
-    margin-bottom: 25px;
-    background: #fff;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    text-align: center;
-  }
-  nav a {
-    margin: 0 10px;
-    text-decoration: none;
-    color: #0066cc;
-    font-weight: 600;
-  }
-  nav a:hover {
-    text-decoration: underline;
-  }
-  section {
-    margin-bottom: 40px;
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  section h2 {
-    margin-bottom: 12px;
-    border-bottom: 2px solid #0066cc;
-    padding-bottom: 6px;
-    font-weight: 700;
-  }
-  img {
-    width: 80%;
-    max-width: 900px;
-    height: auto;
-    display: block;
-    margin: 10px auto 0 auto;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-  }
-  footer {
-    text-align: center;
-    color: #666;
-    margin-top: 50px;
-    font-size: 0.9rem;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutti Frutti Online - Multijugador</title>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .code-display {
+            background: #f8f9fa;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .code-display h3 {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 3px;
+            font-family: monospace;
+        }
+
+        .waiting {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .letter-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .timer {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            font-family: monospace;
+        }
+
+        .timer.warning {
+            color: #e74c3c;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .round-info {
+            text-align: right;
+        }
+
+        .round-info span {
+            display: block;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .round-info strong {
+            color: #333;
+            font-size: 16px;
+        }
+
+        .topics-grid {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .topic-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .topic-card label {
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .topic-card input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .topic-card input:disabled {
+            background: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .topic-card input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .topics-setup {
+            margin-bottom: 20px;
+        }
+
+        .topic-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .topic-tag button {
+            background: none;
+            border: none;
+            color: #1976d2;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .add-topic {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .add-topic input {
+            flex: 1;
+        }
+
+        .btn-small {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .results-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .results-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .player-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .player-badge.you {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .player-badge.opponent {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .turn-indicator {
+            text-align: center;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #1976d2;
+        }
+
+        .turn-indicator.your-turn {
+            background: #d4edda;
+            color: #155724;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .final-results {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 15px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .final-results h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .score-comparison {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            gap: 20px;
+        }
+
+        .score-box {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 15px;
+            flex: 1;
+        }
+
+        .score-box h4 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .score-box .score {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.6em; }
+            .code { font-size: 24px; }
+            .letter-display { width: 60px; height: 60px; font-size: 24px; }
+            .game-header { flex-direction: column; text-align: center; }
+            .round-info { text-align: center; }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>🎲 Tutti Frutti</h1>
+        <p class="subtitle">Juega online con un amigo</p>
 
-<h1>Cartas Aéreas - SUMU (Aeropuerto Internacional de Carrasco)</h1>
+        <!-- Pantalla de Inicio -->
+        <div class="screen active" id="homeScreen">
+            <div class="menu-buttons">
+                <button class="btn btn-primary" onclick="showScreen('createScreen')">
+                    🎮 Crear Sala
+                </button>
+                <button class="btn btn-secondary" onclick="showScreen('joinScreen')">
+                    🔗 Unirse a Sala
+                </button>
+            </div>
+        </div>
 
-<nav>
-  <a href="#carta1">31145</a>
-  <a href="#carta2">31146</a>
-  <a href="#carta3">31149</a>
-  <a href="#carta4">31150</a>
-  <a href="#carta5">31151</a>
-  <a href="#carta6">31152</a>
-  <a href="#carta7">31153</a>
-  <a href="#carta8">31154</a>
-  <a href="#carta9">31156</a>
-  <a href="#carta10">31159</a>
-  <a href="#carta11">31144</a>
-  <a href="#carta12">31158</a>
-</nav>
+        <!-- Pantalla Crear Sala -->
+        <div class="screen" id="createScreen">
+            <div class="input-group">
+                <label>Tu nombre</label>
+                <input type="text" id="hostName" placeholder="Tu nombre" value="Jugador 1">
+            </div>
 
-<section id="carta1">
-  <h2>31145</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31145&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31145" />
-</section>
+            <div class="input-group">
+                <label>Tiempo por ronda (segundos)</label>
+                <input type="number" id="roundTime" value="60" min="10" max="180">
+            </div>
 
-<section id="carta2">
-  <h2>31146</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31146&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31146" />
-</section>
+            <div class="input-group">
+                <label>Número de rondas</label>
+                <input type="number" id="totalRounds" value="5" min="1" max="10">
+            </div>
 
-<section id="carta3">
-  <h2>31149</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31149&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31149" />
-</section>
+            <div class="topics-setup">
+                <label>Temas del juego (agrega los que quieras)</label>
+                <div id="topicsList"></div>
+                <div class="add-topic">
+                    <input type="text" id="newTopic" placeholder="Ej: Nombres, Colores..." maxlength="20">
+                    <button class="btn-small" onclick="addTopic()">Agregar</button>
+                </div>
+            </div>
 
-<section id="carta4">
-  <h2>31150</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31150&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31150" />
-</section>
+            <button class="btn btn-primary" onclick="createRoom()">Crear Sala</button>
+            <button class="btn btn-secondary" onclick="showScreen('homeScreen')" style="margin-top: 10px;">Volver</button>
+        </div>
 
-<section id="carta5">
-  <h2>31151</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31151&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31151" />
-</section>
+        <!-- Pantalla Esperando -->
+        <div class="screen" id="waitingScreen">
+            <div class="code-display">
+                <h3>Código de la sala</h3>
+                <div class="code" id="roomCode">----</div>
+                <p style="margin-top: 10px; color: #666; font-size: 14px;">Comparte este código con tu amigo</p>
+            </div>
+            <div class="waiting">
+                <div class="spinner"></div>
+                <p>Esperando que se una tu amigo...</p>
+            </div>
+            <button class="btn btn-secondary" onclick="location.reload()" style="margin-top: 20px;">Cancelar</button>
+        </div>
 
-<section id="carta6">
-  <h2>31152</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31152&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31152" />
-</section>
+        <!-- Pantalla Unirse -->
+        <div class="screen" id="joinScreen">
+            <div class="input-group">
+                <label>Tu nombre</label>
+                <input type="text" id="guestName" placeholder="Tu nombre" value="Jugador 2">
+            </div>
 
-<section id="carta7">
-  <h2>31153</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31153&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31153" />
-</section>
+            <div class="input-group">
+                <label>Código de la sala</label>
+                <input type="text" id="joinCode" placeholder="Ej: abc-123-def" style="text-transform: uppercase;">
+            </div>
 
-<section id="carta8">
-  <h2>31154</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31154&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31154" />
-</section>
+            <button class="btn btn-primary" onclick="joinRoom()">Unirse</button>
+            <button class="btn btn-secondary" onclick="showScreen('homeScreen')" style="margin-top: 10px;">Volver</button>
+        </div>
 
-<section id="carta9">
-  <h2>31156</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31156&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31156" />
-</section>
+        <!-- Pantalla del Juego -->
+        <div class="screen" id="gameScreen">
+            <div class="status disconnected" id="connectionStatus">Conectando...</div>
 
-<section id="carta10">
-  <h2>31159</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31159&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31159" />
-</section>
+            <div class="turn-indicator" id="turnIndicator">
+                Esperando inicio...
+            </div>
 
-<section id="carta11">
-  <h2>31144</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31144&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31144" />
-</section>
+            <div class="game-header">
+                <div class="letter-display" id="currentLetter">?</div>
+                <div class="timer" id="timer">60</div>
+                <div class="round-info">
+                    <span>Ronda <strong id="currentRound">1</strong> de <strong id="totalRoundsDisplay">5</strong></span>
+                    <span id="roundsLeft">Quedan 4</span>
+                </div>
+            </div>
 
-<section id="carta12">
-  <h2>31158</h2>
-  <img src="https://old-charts.flighthelperbot.com/proto/get_page.php?secret_key=fbc7b76d302cc7d9bc87f342b7f3b9d9b9dfbcdb5f6912add63b51354bdda823&page=31158&data=SUMUd144638663baf9179174b6dd3e01c2ae" alt="SUMU 31158" />
-</section>
+            <div class="topics-grid" id="topicsGrid"></div>
 
-<footer>
-  <p>Fuente: FlightHelperBot - Cartas Aéreas SUMU</p>
-</footer>
+            <div id="gameControls">
+                <button class="btn btn-danger" id="stopBtn" onclick="stopRound()" style="width: 100%;">
+                    ¡STOP! 🛑
+                </button>
+            </div>
+        </div>
 
+        <!-- Pantalla de Resultados -->
+        <div class="screen" id="resultsScreen">
+            <div class="final-results">
+                <h2>¡Juego Terminado! 🎉</h2>
+                <p>Revisen juntos quién ganó</p>
+                
+                <div class="score-comparison">
+                    <div class="score-box">
+                        <h4 id="finalPlayer1">Jugador 1</h4>
+                        <div class="score" id="score1">-</div>
+                    </div>
+                    <div class="score-box">
+                        <h4 id="finalPlayer2">Jugador 2</h4>
+                        <div class="score" id="score2">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <table class="results-table" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Ronda</th>
+                        <th>Letra</th>
+                        <th id="tableP1">J1</th>
+                        <th id="tableP2">J2</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <button class="btn btn-primary" onclick="location.reload()">Jugar de Nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let peer = null;
+        let conn = null;
+        let isHost = false;
+        let gameState = {
+            myName: '',
+            opponentName: '',
+            topics: ['Nombre', 'Animal', 'Color', 'País', 'Fruta'],
+            roundTime: 60,
+            totalRounds: 5,
+            currentRound: 1,
+            currentLetter: '',
+            isMyTurn: false,
+            timer: null,
+            timeLeft: 0,
+            myAnswers: {},
+            opponentAnswers: {},
+            roundsHistory: []
+        };
+
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let usedLetters = [];
+
+        // Navegación entre pantallas
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Gestión de temas
+        function addTopic() {
+            const input = document.getElementById('newTopic');
+            const topic = input.value.trim();
+            if (topic && !gameState.topics.includes(topic)) {
+                gameState.topics.push(topic);
+                input.value = '';
+                renderTopics();
+            }
+        }
+
+        function removeTopic(index) {
+            gameState.topics.splice(index, 1);
+            renderTopics();
+        }
+
+        function renderTopics() {
+            const container = document.getElementById('topicsList');
+            container.innerHTML = gameState.topics.map((t, i) => `
+                <span class="topic-tag">
+                    ${t}
+                    <button onclick="removeTopic(${i})">×</button>
+                </span>
+            `).join('');
+        }
+
+        // Inicializar temas por defecto
+        renderTopics();
+
+        // Crear sala (Host)
+        function createRoom() {
+            gameState.myName = document.getElementById('hostName').value || 'Jugador 1';
+            gameState.roundTime = parseInt(document.getElementById('roundTime').value) || 60;
+            gameState.totalRounds = parseInt(document.getElementById('totalRounds').value) || 5;
+
+            if (gameState.topics.length === 0) {
+                alert('Agrega al menos un tema');
+                return;
+            }
+
+            isHost = true;
+            showScreen('waitingScreen');
+
+            // Crear peer con ID aleatorio
+            const roomCode = generateRoomCode();
+            document.getElementById('roomCode').textContent = roomCode;
+
+            peer = new Peer(roomCode, {
+                host: '0.peerjs.com',
+                port: 443,
+                secure: true
+            });
+
+            peer.on('open', (id) => {
+                console.log('Sala creada:', id);
+            });
+
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Error:', err);
+                alert('Error al crear sala. Intenta de nuevo.');
+                location.reload();
+            });
+        }
+
+        // Unirse a sala (Guest)
+        function joinRoom() {
+            gameState.myName = document.getElementById('guestName').value || 'Jugador 2';
+            const code = document.getElementById('joinCode').value.trim().toLowerCase();
+
+            if (!code) {
+                alert('Ingresa un código válido');
+                return;
+            }
+
+            isHost = false;
+            
+            peer = new Peer({
+                host: '0.peerjs.com',
+                port: 443,
+                secure: true
+            });
+
+            peer.on('open', () => {
+                conn = peer.connect(code);
+                setupConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Error:', err);
+                alert('No se pudo conectar. Verifica el código.');
+            });
+        }
+
+        // Configurar conexión
+        function setupConnection() {
+            conn.on('open', () => {
+                document.getElementById('connectionStatus').textContent = '✅ Conectado';
+                document.getElementById('connectionStatus').className = 'status connected';
+
+                if (isHost) {
+                    // Enviar configuración al invitado
+                    conn.send({
+                        type: 'config',
+                        topics: gameState.topics,
+                        roundTime: gameState.roundTime,
+                        totalRounds: gameState.totalRounds,
+                        hostName: gameState.myName
+                    });
+                    startGame();
+                }
+            });
+
+            conn.on('data', (data) => {
+                handleData(data);
+            });
+
+            conn.on('close', () => {
+                document.getElementById('connectionStatus').textContent = '❌ Desconectado';
+                document.getElementById('connectionStatus').className = 'status disconnected';
+            });
+        }
+
+        // Manejar datos recibidos
+        function handleData(data) {
+            switch(data.type) {
+                case 'config':
+                    // Guest recibe configuración
+                    gameState.topics = data.topics;
+                    gameState.roundTime = data.roundTime;
+                    gameState.totalRounds = data.totalRounds;
+                    gameState.opponentName = data.hostName;
+                    showScreen('gameScreen');
+                    startGame();
+                    break;
+
+                case 'startRound':
+                    startRound(data.letter);
+                    break;
+
+                case 'answers':
+                    // Recibir respuestas del oponente
+                    gameState.opponentAnswers = data.answers;
+                    showRoundResults();
+                    break;
+
+                case 'nextRound':
+                    gameState.currentRound = data.round;
+                    if (gameState.currentRound <= gameState.totalRounds) {
+                        startRound(data.letter);
+                    } else {
+                        showFinalResults();
+                    }
+                    break;
+
+                case 'playerName':
+                    if (isHost) {
+                        gameState.opponentName = data.name;
+                    }
+                    break;
+            }
+        }
+
+        // Iniciar juego
+        function startGame() {
+            showScreen('gameScreen');
+            document.getElementById('totalRoundsDisplay').textContent = gameState.totalRounds;
+            
+            if (!isHost) {
+                // Guest envía su nombre
+                conn.send({ type: 'playerName', name: gameState.myName });
+                gameState.opponentName = 'Jugador 1';
+            } else {
+                gameState.opponentName = 'Jugador 2';
+            }
+
+            // Host inicia primera ronda
+            if (isHost) {
+                setTimeout(() => initiateRound(), 1000);
+            }
+        }
+
+        // Iniciar ronda (solo Host)
+        function initiateRound() {
+            const available = alphabet.split('').filter(l => !usedLetters.includes(l));
+            if (available.length === 0) usedLetters = [];
+            
+            const letter = available[Math.floor(Math.random() * available.length)];
+            usedLetters.push(letter);
+
+            conn.send({
+                type: 'startRound',
+                letter: letter
+            });
+            
+            startRound(letter);
+        }
+
+        // Comenzar ronda local
+        function startRound(letter) {
+            gameState.currentLetter = letter;
+            gameState.timeLeft = gameState.roundTime;
+            gameState.myAnswers = {};
+            gameState.opponentAnswers = {};
+            gameState.isMyTurn = true;
+
+            document.getElementById('currentLetter').textContent = letter;
+            document.getElementById('currentRound').textContent = gameState.currentRound;
+            document.getElementById('roundsLeft').textContent = `Quedan ${gameState.totalRounds - gameState.currentRound}`;
+
+            // Crear inputs
+            const grid = document.getElementById('topicsGrid');
+            grid.innerHTML = gameState.topics.map((topic, i) => `
+                <div class="topic-card">
+                    <span class="player-badge you">TÚ: ${gameState.myName}</span>
+                    <label>${topic}</label>
+                    <input type="text" 
+                           id="topic_${i}" 
+                           placeholder="${letter}..." 
+                           autocomplete="off"
+                           oninput="saveAnswer('${topic}', this.value)">
+                </div>
+            `).join('');
+
+            document.getElementById('turnIndicator').textContent = '¡Escribe tus respuestas!';
+            document.getElementById('turnIndicator').className = 'turn-indicator your-turn';
+            document.getElementById('stopBtn').disabled = false;
+
+            startTimer();
+        }
+
+        // Guardar respuesta
+        function saveAnswer(topic, value) {
+            gameState.myAnswers[topic] = value.trim();
+        }
+
+        // Temporizador
+        function startTimer() {
+            updateTimer();
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                updateTimer();
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    finishRound();
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const el = document.getElementById('timer');
+            el.textContent = gameState.timeLeft;
+            el.className = gameState.timeLeft <= 10 ? 'timer warning' : 'timer';
+        }
+
+        // STOP
+        function stopRound() {
+            clearInterval(gameState.timer);
+            finishRound();
+        }
+
+        // Terminar ronda
+        function finishRound() {
+            gameState.isMyTurn = false;
+            document.getElementById('turnIndicator').textContent = 'Esperando respuestas de tu oponente...';
+            document.getElementById('turnIndicator').className = 'turn-indicator';
+            document.getElementById('stopBtn').disabled = true;
+
+            // Deshabilitar inputs
+            document.querySelectorAll('.topic-card input').forEach(input => input.disabled = true);
+
+            // Enviar respuestas
+            conn.send({
+                type: 'answers',
+                answers: gameState.myAnswers
+            });
+
+            // Si ya tenemos respuestas del oponente, mostrar
+            if (Object.keys(gameState.opponentAnswers).length > 0) {
+                showRoundResults();
+            }
+        }
+
+        // Mostrar resultados de la ronda
+        function showRoundResults() {
+            // Guardar en historial
+            gameState.roundsHistory.push({
+                round: gameState.currentRound,
+                letter: gameState.currentLetter,
+                player1: isHost ? gameState.myAnswers : gameState.opponentAnswers,
+                player2: isHost ? gameState.opponentAnswers : gameState.myAnswers
+            });
+
+            // Preparar siguiente ronda o final
+            if (gameState.currentRound < gameState.totalRounds) {
+                gameState.currentRound++;
+                
+                setTimeout(() => {
+                    if (isHost) {
+                        setTimeout(() => initiateRound(), 2000);
+                    }
+                }, 3000);
+            } else {
+                if (isHost) {
+                    setTimeout(() => {
+                        conn.send({ type: 'nextRound', round: gameState.currentRound + 1 });
+                        showFinalResults();
+                    }, 3000);
+                }
+            }
+        }
+
+        // Mostrar resultados finales
+        function showFinalResults() {
+            showScreen('resultsScreen');
+            
+            document.getElementById('finalPlayer1').textContent = isHost ? gameState.myName : gameState.opponentName;
+            document.getElementById('finalPlayer2').textContent = isHost ? gameState.opponentName : gameState.myName;
+            document.getElementById('tableP1').textContent = isHost ? gameState.myName : gameState.opponentName;
+            document.getElementById('tableP2').textContent = isHost ? gameState.opponentName : gameState.myName;
+
+            // Contar respuestas no vacías
+            let score1 = 0, score2 = 0;
+            gameState.roundsHistory.forEach(r => {
+                score1 += Object.values(r.player1).filter(v => v && v !== '-').length;
+                score2 += Object.values(r.player2).filter(v => v && v !== '-').length;
+            });
+
+            document.getElementById('score1').textContent = score1;
+            document.getElementById('score2').textContent = score2;
+
+            // Tabla detallada
+            const tbody = document.querySelector('#resultsTable tbody');
+            tbody.innerHTML = gameState.roundsHistory.map(r => `
+                <tr>
+                    <td>${r.round}</td>
+                    <td><strong>${r.letter}</strong></td>
+                    <td>
+                        ${gameState.topics.map(t => 
+                            `${t}: ${r.player1[t] || '-'}`
+                        ).join('<br>')}
+                    </td>
+                    <td>
+                        ${gameState.topics.map(t => 
+                            `${t}: ${r.player2[t] || '-'}`
+                        ).join('<br>')}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Generar código de sala
+        function generateRoomCode() {
+            const parts = [];
+            for (let i = 0; i < 3; i++) {
+                parts.push(Math.random().toString(36).substring(2, 5));
+            }
+            return parts.join('-');
+        }
+
+        // Enter para agregar tema
+        document.getElementById('newTopic')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTopic();
+        });
+    </script>
 </body>
 </html>
