@@ -1,985 +1,523 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutti Frutti Online - Multijugador</title>
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            width: 100%;
-            max-width: 600px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.2em;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 0.9em;
-        }
-
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            padding: 18px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .code-display {
-            background: #f8f9fa;
-            border: 3px dashed #667eea;
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .code-display h3 {
-            color: #666;
-            margin-bottom: 10px;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .code {
-            font-size: 32px;
-            font-weight: bold;
-            color: #667eea;
-            letter-spacing: 3px;
-            font-family: monospace;
-        }
-
-        .waiting {
-            text-align: center;
-            color: #666;
-            margin-top: 20px;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .status {
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status.disconnected {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .letter-display {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            font-weight: bold;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        }
-
-        .timer {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            font-family: monospace;
-        }
-
-        .timer.warning {
-            color: #e74c3c;
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .round-info {
-            text-align: right;
-        }
-
-        .round-info span {
-            display: block;
-            color: #666;
-            font-size: 13px;
-        }
-
-        .round-info strong {
-            color: #333;
-            font-size: 16px;
-        }
-
-        .topics-grid {
-            display: grid;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        .topic-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
-            border-left: 4px solid #667eea;
-        }
-
-        .topic-card label {
-            color: #667eea;
-            font-weight: 700;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            font-size: 12px;
-        }
-
-        .topic-card input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            background: white;
-        }
-
-        .topic-card input:disabled {
-            background: #e9ecef;
-            cursor: not-allowed;
-        }
-
-        .topic-card input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .topics-setup {
-            margin-bottom: 20px;
-        }
-
-        .topic-tag {
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 8px 15px;
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            margin: 5px;
-        }
-
-        .topic-tag button {
-            background: none;
-            border: none;
-            color: #1976d2;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .add-topic {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .add-topic input {
-            flex: 1;
-        }
-
-        .btn-small {
-            padding: 12px 20px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-
-        .results-table th {
-            background: #667eea;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-
-        .results-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .results-table tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        .player-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .player-badge.you {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .player-badge.opponent {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .turn-indicator {
-            text-align: center;
-            padding: 15px;
-            background: #e3f2fd;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-weight: 600;
-            color: #1976d2;
-        }
-
-        .turn-indicator.your-turn {
-            background: #d4edda;
-            color: #155724;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .final-results {
-            text-align: center;
-            padding: 30px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 15px;
-            color: white;
-            margin-bottom: 20px;
-        }
-
-        .final-results h2 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        .score-comparison {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-            gap: 20px;
-        }
-
-        .score-box {
-            background: rgba(255,255,255,0.2);
-            padding: 20px;
-            border-radius: 15px;
-            flex: 1;
-        }
-
-        .score-box h4 {
-            font-size: 14px;
-            margin-bottom: 10px;
-            opacity: 0.9;
-        }
-
-        .score-box .score {
-            font-size: 36px;
-            font-weight: bold;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 480px) {
-            h1 { font-size: 1.6em; }
-            .code { font-size: 24px; }
-            .letter-display { width: 60px; height: 60px; font-size: 24px; }
-            .game-header { flex-direction: column; text-align: center; }
-            .round-info { text-align: center; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LA PARCA EVENTOS · Panel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family:'Inter',-apple-system,sans-serif;
+      min-height:100vh;
+      background:#0a0a0a;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(160,0,0,0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(100,0,0,0.12) 0%, transparent 50%);
+      padding:2.5rem 1rem;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    body::before {
+      content:'';
+      position:fixed;
+      inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+      background-size:40px 40px;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .container { position:relative; z-index:1; width:100%; max-width:820px; }
+
+    /* HEADER */
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:12px; margin-bottom:2rem;
+      padding-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,0.07);
+    }
+    .brand { display:flex; align-items:center; gap:14px; }
+    .skull {
+      width:44px; height:44px;
+      background:linear-gradient(135deg,#c00 0%,#800 100%);
+      border-radius:12px; display:flex; align-items:center;
+      justify-content:center; font-size:22px;
+      box-shadow:0 4px 16px rgba(200,0,0,0.35); flex-shrink:0;
+    }
+    .brand-name { font-size:1.3rem; font-weight:700; color:#fff; letter-spacing:-0.02em; }
+    .brand-name span { color:#e53030; }
+    .brand-sub { font-size:0.68rem; color:rgba(255,255,255,0.3); letter-spacing:0.12em; text-transform:uppercase; }
+    .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .admin-badge {
+      background:rgba(229,48,48,0.15); border:1px solid rgba(229,48,48,0.4);
+      color:#f08080; font-size:0.68rem; padding:4px 12px; border-radius:40px;
+      letter-spacing:0.08em; text-transform:uppercase; font-weight:600;
+    }
+    .employee-badge {
+      background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.25);
+      color:#4ade80; font-size:0.68rem; padding:4px 12px; border-radius:40px;
+      letter-spacing:0.08em; text-transform:uppercase; font-weight:600;
+    }
+
+    /* LOGIN MODAL */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.85); backdrop-filter:blur(4px);
+      z-index:100; align-items:center; justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:#141414; border:1px solid rgba(255,255,255,0.1);
+      border-radius:18px; padding:2rem; width:100%; max-width:360px;
+      box-shadow:0 24px 64px rgba(0,0,0,0.8);
+    }
+    .modal-title { font-size:1rem; font-weight:600; color:#fff; margin-bottom:6px; }
+    .modal-sub { font-size:0.78rem; color:rgba(255,255,255,0.35); margin-bottom:1.5rem; }
+    .modal-input {
+      width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1);
+      border-radius:8px; padding:0 14px; height:40px; font-size:0.88rem;
+      color:#fff; font-family:inherit; outline:none; margin-bottom:10px;
+      transition:border-color 0.2s;
+    }
+    .modal-input:focus { border-color:rgba(229,48,48,0.5); }
+    .modal-input::placeholder { color:rgba(255,255,255,0.2); }
+    .modal-error { font-size:0.75rem; color:#f08080; margin-bottom:10px; display:none; }
+    .modal-actions { display:flex; gap:8px; }
+
+    /* ADD FORM */
+    .add-form {
+      display:none; background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.1); border-radius:14px;
+      padding:1.2rem 1.5rem; margin-bottom:12px;
+    }
+    .add-form.open { display:block; }
+    .add-form-title { font-size:0.68rem; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; }
+    .add-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    .add-field { flex:1 1 130px; display:flex; flex-direction:column; gap:5px; }
+    .add-label { font-size:0.65rem; color:rgba(255,255,255,0.35); letter-spacing:0.08em; text-transform:uppercase; }
+    .add-input {
+      background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1);
+      border-radius:8px; padding:0 12px; height:36px; font-size:0.85rem;
+      color:#fff; font-family:inherit; outline:none; transition:border-color 0.2s; width:100%;
+    }
+    .add-input::placeholder { color:rgba(255,255,255,0.2); }
+    .add-input:focus { border-color:rgba(229,48,48,0.5); }
+    .add-actions { display:flex; gap:8px; }
+
+    /* CARDS */
+    .cards { display:flex; flex-direction:column; gap:10px; margin-bottom:1rem; }
+    .card {
+      background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+      border-radius:14px; padding:1rem 1.25rem;
+      display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+      transition:border-color 0.2s, background 0.2s;
+    }
+    .card:hover { background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.14); }
+    .card.taken { border-color:rgba(229,48,48,0.2); background:rgba(229,48,48,0.04); }
+    .card-left { flex:1 1 200px; }
+    .event-name { font-size:0.95rem; font-weight:600; color:#fff; margin-bottom:5px; }
+    .event-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+    .meta-item { display:flex; align-items:center; gap:4px; font-size:0.78rem; color:rgba(255,255,255,0.4); }
+    .badge-libre {
+      display:inline-flex; align-items:center; gap:4px; font-size:0.65rem;
+      background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.25);
+      color:#4ade80; padding:2px 9px; border-radius:40px; font-weight:500;
+      letter-spacing:0.05em; text-transform:uppercase;
+    }
+    .badge-tomado {
+      display:inline-flex; align-items:center; gap:4px; font-size:0.65rem;
+      background:rgba(229,48,48,0.1); border:1px solid rgba(229,48,48,0.25);
+      color:#f08080; padding:2px 9px; border-radius:40px; font-weight:500;
+      letter-spacing:0.05em; text-transform:uppercase;
+    }
+    .employee-name { font-size:0.8rem; color:rgba(255,255,255,0.45); margin-top:5px; }
+    .card-right { display:flex; align-items:center; gap:8px; flex-shrink:0; flex-wrap:wrap; }
+    .claim-input {
+      background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1);
+      border-radius:8px; padding:0 12px; height:34px; font-size:0.82rem;
+      color:#fff; font-family:inherit; outline:none; width:130px;
+      transition:border-color 0.2s;
+    }
+    .claim-input::placeholder { color:rgba(255,255,255,0.2); }
+    .claim-input:focus { border-color:rgba(229,48,48,0.5); }
+    .claim-input:disabled { opacity:0.3; cursor:not-allowed; }
+
+    /* BUTTONS */
+    .btn {
+      height:34px; padding:0 14px; border-radius:8px; font-size:0.78rem;
+      font-weight:500; cursor:pointer; font-family:inherit; transition:all 0.15s;
+      white-space:nowrap; border:1px solid rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.65);
+    }
+    .btn:hover:not(:disabled) { background:rgba(255,255,255,0.1); color:#fff; }
+    .btn:disabled { opacity:0.3; cursor:not-allowed; }
+    .btn-primary {
+      background:linear-gradient(135deg,#c00 0%,#900 100%); border-color:transparent;
+      color:#fff; box-shadow:0 2px 10px rgba(200,0,0,0.3);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background:linear-gradient(135deg,#d00 0%,#a00 100%);
+      box-shadow:0 4px 16px rgba(200,0,0,0.45);
+    }
+    .btn-sm { height:28px; padding:0 10px; font-size:0.72rem; }
+    .btn-danger {
+      background:rgba(229,48,48,0.1); border:1px solid rgba(229,48,48,0.3);
+      color:#f08080;
+    }
+    .btn-danger:hover:not(:disabled) { background:rgba(229,48,48,0.2); color:#fff; }
+    .btn-add {
+      width:100%; height:40px; border:1px dashed rgba(255,255,255,0.12);
+      background:transparent; color:rgba(255,255,255,0.3); border-radius:12px;
+      font-size:0.8rem; cursor:pointer; font-family:inherit; transition:all 0.2s;
+      display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:1.5rem;
+    }
+    .btn-add:hover { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); }
+
+    /* DIVIDER / LOG */
+    .divider { height:1px; background:rgba(255,255,255,0.07); margin-bottom:1.5rem; }
+    .log-title { font-size:0.65rem; color:rgba(255,255,255,0.25); text-transform:uppercase; letter-spacing:0.12em; font-weight:500; margin-bottom:10px; }
+    .log-list { display:flex; flex-direction:column; }
+    .log-item {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.05); gap:12px;
+    }
+    .log-item:last-child { border-bottom:none; }
+    .log-text { font-size:0.82rem; color:rgba(255,255,255,0.4); }
+    .log-text strong { color:rgba(255,255,255,0.75); font-weight:600; }
+    .log-text em { color:rgba(229,48,48,0.85); font-style:normal; font-weight:500; }
+    .log-time { font-size:0.65rem; color:rgba(255,255,255,0.18); white-space:nowrap; flex-shrink:0; }
+    .log-empty { font-size:0.82rem; color:rgba(255,255,255,0.2); font-style:italic; padding:8px 0; }
+
+    /* FOOTER */
+    .footer { margin-top:2.5rem; text-align:center; font-size:0.65rem; color:rgba(255,255,255,0.12); letter-spacing:0.1em; text-transform:uppercase; }
+
+    @media(max-width:520px){
+      .card { flex-direction:column; align-items:flex-start; }
+      .card-right { width:100%; }
+      .claim-input { flex:1; width:auto; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎲 Tutti Frutti FACU HOMOSEXUAL</h1>
-        <p class="subtitle">Juega online con un amigo</p>
 
-        <!-- Pantalla de Inicio -->
-        <div class="screen active" id="homeScreen">
-            <div class="menu-buttons">
-                <button class="btn btn-primary" onclick="showScreen('createScreen')">
-                    🎮 Crear Sala
-                </button>
-                <button class="btn btn-secondary" onclick="showScreen('joinScreen')">
-                    🔗 Unirse a Sala
-                </button>
-            </div>
-        </div>
-
-        <!-- Pantalla Crear Sala -->
-        <div class="screen" id="createScreen">
-            <div class="input-group">
-                <label>Tu nombre</label>
-                <input type="text" id="hostName" placeholder="Tu nombre" value="Jugador 1">
-            </div>
-
-            <div class="input-group">
-                <label>Tiempo por ronda (segundos)</label>
-                <input type="number" id="roundTime" value="60" min="10" max="180">
-            </div>
-
-            <div class="input-group">
-                <label>Número de rondas</label>
-                <input type="number" id="totalRounds" value="5" min="1" max="10">
-            </div>
-
-            <div class="topics-setup">
-                <label>Temas del juego (agrega los que quieras)</label>
-                <div id="topicsList"></div>
-                <div class="add-topic">
-                    <input type="text" id="newTopic" placeholder="Ej: Nombres, Colores..." maxlength="20">
-                    <button class="btn-small" onclick="addTopic()">Agregar</button>
-                </div>
-            </div>
-
-            <button class="btn btn-primary" onclick="createRoom()">Crear Sala</button>
-            <button class="btn btn-secondary" onclick="showScreen('homeScreen')" style="margin-top: 10px;">Volver</button>
-        </div>
-
-        <!-- Pantalla Esperando -->
-        <div class="screen" id="waitingScreen">
-            <div class="code-display">
-                <h3>Código de la sala</h3>
-                <div class="code" id="roomCode">----</div>
-                <p style="margin-top: 10px; color: #666; font-size: 14px;">Comparte este código con tu amigo</p>
-            </div>
-            <div class="waiting">
-                <div class="spinner"></div>
-                <p>Esperando que se una tu amigo...</p>
-            </div>
-            <button class="btn btn-secondary" onclick="location.reload()" style="margin-top: 20px;">Cancelar</button>
-        </div>
-
-        <!-- Pantalla Unirse -->
-        <div class="screen" id="joinScreen">
-            <div class="input-group">
-                <label>Tu nombre</label>
-                <input type="text" id="guestName" placeholder="Tu nombre" value="Jugador 2">
-            </div>
-
-            <div class="input-group">
-                <label>Código de la sala</label>
-                <input type="text" id="joinCode" placeholder="Ej: abc-123-def" style="text-transform: uppercase;">
-            </div>
-
-            <button class="btn btn-primary" onclick="joinRoom()">Unirse</button>
-            <button class="btn btn-secondary" onclick="showScreen('homeScreen')" style="margin-top: 10px;">Volver</button>
-        </div>
-
-        <!-- Pantalla del Juego -->
-        <div class="screen" id="gameScreen">
-            <div class="status disconnected" id="connectionStatus">Conectando...</div>
-
-            <div class="turn-indicator" id="turnIndicator">
-                Esperando inicio...
-            </div>
-
-            <div class="game-header">
-                <div class="letter-display" id="currentLetter">?</div>
-                <div class="timer" id="timer">60</div>
-                <div class="round-info">
-                    <span>Ronda <strong id="currentRound">1</strong> de <strong id="totalRoundsDisplay">5</strong></span>
-                    <span id="roundsLeft">Quedan 4</span>
-                </div>
-            </div>
-
-            <div class="topics-grid" id="topicsGrid"></div>
-
-            <div id="gameControls">
-                <button class="btn btn-danger" id="stopBtn" onclick="stopRound()" style="width: 100%;">
-                    ¡STOP! 🛑
-                </button>
-            </div>
-        </div>
-
-        <!-- Pantalla de Resultados -->
-        <div class="screen" id="resultsScreen">
-            <div class="final-results">
-                <h2>¡Juego Terminado! 🎉</h2>
-                <p>Revisen juntos quién ganó</p>
-                
-                <div class="score-comparison">
-                    <div class="score-box">
-                        <h4 id="finalPlayer1">Jugador 1</h4>
-                        <div class="score" id="score1">-</div>
-                    </div>
-                    <div class="score-box">
-                        <h4 id="finalPlayer2">Jugador 2</h4>
-                        <div class="score" id="score2">-</div>
-                    </div>
-                </div>
-            </div>
-
-            <table class="results-table" id="resultsTable">
-                <thead>
-                    <tr>
-                        <th>Ronda</th>
-                        <th>Letra</th>
-                        <th id="tableP1">J1</th>
-                        <th id="tableP2">J2</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-
-            <button class="btn btn-primary" onclick="location.reload()">Jugar de Nuevo</button>
-        </div>
+<!-- MODAL ADMIN LOGIN -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal">
+    <div class="modal-title">🔐 Acceso administrador</div>
+    <div class="modal-sub">Ingresá la contraseña de La Parca Eventos</div>
+    <input class="modal-input" type="password" id="adminPassInput" placeholder="Contraseña" onkeydown="if(event.key==='Enter')tryLogin()">
+    <div class="modal-error" id="loginError">Contraseña incorrecta.</div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="tryLogin()">Ingresar</button>
+      <button class="btn" onclick="closeModal('adminModal')">Cancelar</button>
     </div>
+  </div>
+</div>
 
-    <script>
-        // Variables globales
-        let peer = null;
-        let conn = null;
-        let isHost = false;
-        let gameState = {
-            myName: '',
-            opponentName: '',
-            topics: ['Nombre', 'Animal', 'Color', 'País', 'Fruta'],
-            roundTime: 60,
-            totalRounds: 5,
-            currentRound: 1,
-            currentLetter: '',
-            isMyTurn: false,
-            timer: null,
-            timeLeft: 0,
-            myAnswers: {},
-            opponentAnswers: {},
-            roundsHistory: []
-        };
+<!-- MODAL CONFIRMAR BORRAR -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-title">⚠️ Eliminar evento</div>
+    <div class="modal-sub" id="deleteModalText">¿Seguro que querés eliminar este evento?</div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="confirmDelete()">Sí, eliminar</button>
+      <button class="btn" onclick="closeModal('deleteModal')">Cancelar</button>
+    </div>
+  </div>
+</div>
 
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        let usedLetters = [];
+<div class="container">
 
-        // Navegación entre pantallas
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="skull">💀</div>
+      <div>
+        <div class="brand-name"><span>LA PARCA</span> EVENTOS</div>
+        <div class="brand-sub">Empresa de eventos · GTA Hub</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span id="roleBadge" class="employee-badge">Empleado</span>
+      <button class="btn btn-sm" id="adminToggleBtn" onclick="handleAdminToggle()">Modo admin</button>
+    </div>
+  </header>
+
+  <!-- FORM NUEVO EVENTO (solo admin) -->
+  <div class="add-form" id="addForm">
+    <div class="add-form-title">+ Nuevo evento</div>
+    <div class="add-row">
+      <div class="add-field">
+        <label class="add-label">Nombre del evento</label>
+        <input id="newName" class="add-input" placeholder="Ej: Expo Tuning">
+      </div>
+      <div class="add-field">
+        <label class="add-label">Día y fecha</label>
+        <input id="newDay" class="add-input" placeholder="Ej: Jueves 10/07">
+      </div>
+      <div class="add-field">
+        <label class="add-label">Hora (ARG)</label>
+        <input id="newTime" class="add-input" placeholder="Ej: 21:00hs">
+      </div>
+    </div>
+    <div class="add-actions">
+      <button class="btn btn-primary" onclick="confirmAdd()">Agregar evento</button>
+      <button class="btn" onclick="closeAddForm()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div class="cards" id="eventsGrid"></div>
+
+  <!-- BOTON AGREGAR (solo admin) -->
+  <button class="btn-add" id="addBtn" onclick="openAddForm()" style="display:none">
+    ＋ Agregar evento
+  </button>
+
+  <div class="divider"></div>
+
+  <!-- LOG -->
+  <div class="log-title">Actividad reciente</div>
+  <div class="log-list" id="logList"></div>
+
+  <div class="footer">La Parca Eventos · Sistema interno de empleados</div>
+</div>
+
+<script>
+// ─── CONFIGURACIÓN ───────────────────────────────────────────
+// CAMBIÁ ESTA CONTRASEÑA POR LA TUYA
+const ADMIN_PASSWORD = 'laparca2024';
+// ─────────────────────────────────────────────────────────────
+
+const EVENTS_KEY = 'lp4_events';
+const LOG_KEY    = 'lp4_log';
+const SESSION_KEY= 'lp4_admin';
+
+let isAdmin = false;
+let pendingDeleteId = null;
+
+const defaultEvents = [
+  { id:1, name:'Expo Tuning', day:'Lunes 06/07',  time:'19:00hs', status:'libre', employee:'' },
+  { id:2, name:'Expo Tuning', day:'Martes 07/07', time:'18:00hs', status:'libre', employee:'' }
+];
+
+function load(key, def) {
+  try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; }
+}
+function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+function getEvents() { return load(EVENTS_KEY, JSON.parse(JSON.stringify(defaultEvents))); }
+function getLog()    { return load(LOG_KEY, []); }
+function ts() {
+  return new Date().toLocaleString('es-AR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+}
+
+// ── ADMIN AUTH ────────────────────────────────────────────────
+function handleAdminToggle() {
+  if (isAdmin) { logoutAdmin(); return; }
+  document.getElementById('adminPassInput').value = '';
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('adminModal').classList.add('open');
+  setTimeout(() => document.getElementById('adminPassInput').focus(), 100);
+}
+
+function tryLogin() {
+  const val = document.getElementById('adminPassInput').value;
+  if (val === ADMIN_PASSWORD) {
+    isAdmin = true;
+    save(SESSION_KEY, true);
+    closeModal('adminModal');
+    applyRole();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('adminPassInput').value = '';
+    document.getElementById('adminPassInput').focus();
+  }
+}
+
+function logoutAdmin() {
+  isAdmin = false;
+  localStorage.removeItem(SESSION_KEY);
+  applyRole();
+}
+
+function applyRole() {
+  document.getElementById('roleBadge').textContent  = isAdmin ? 'Administrador' : 'Empleado';
+  document.getElementById('roleBadge').className    = isAdmin ? 'admin-badge' : 'employee-badge';
+  document.getElementById('adminToggleBtn').textContent = isAdmin ? 'Cerrar sesión' : 'Modo admin';
+  document.getElementById('addBtn').style.display   = isAdmin ? '' : 'none';
+  render();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── ADD FORM ──────────────────────────────────────────────────
+function openAddForm() {
+  document.getElementById('addForm').classList.add('open');
+  document.getElementById('addBtn').style.display = 'none';
+}
+function closeAddForm() {
+  document.getElementById('addForm').classList.remove('open');
+  document.getElementById('addBtn').style.display = '';
+  ['newName','newDay','newTime'].forEach(id => document.getElementById(id).value = '');
+}
+function confirmAdd() {
+  const name = document.getElementById('newName').value.trim();
+  const day  = document.getElementById('newDay').value.trim();
+  const time = document.getElementById('newTime').value.trim();
+  if (!name || !day || !time) return;
+  const events = getEvents();
+  events.push({ id: Date.now(), name, day, time, status:'libre', employee:'' });
+  save(EVENTS_KEY, events);
+  addLog('Admin', 'agregó el evento', name + ' · ' + day);
+  closeAddForm();
+  render();
+}
+
+// ── DELETE ────────────────────────────────────────────────────
+function askDelete(id) {
+  const events = getEvents();
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  pendingDeleteId = id;
+  document.getElementById('deleteModalText').textContent =
+    '¿Seguro que querés eliminar "' + ev.name + ' · ' + ev.day + '"?';
+  document.getElementById('deleteModal').classList.add('open');
+}
+function confirmDelete() {
+  if (!pendingDeleteId) return;
+  const events = getEvents();
+  const ev = events.find(e => e.id === pendingDeleteId);
+  const filtered = events.filter(e => e.id !== pendingDeleteId);
+  save(EVENTS_KEY, filtered);
+  if (ev) addLog('Admin', 'eliminó el evento', ev.name + ' · ' + ev.day);
+  pendingDeleteId = null;
+  closeModal('deleteModal');
+  render();
+}
+
+// ── CLAIM / RELEASE ───────────────────────────────────────────
+function claim(id) {
+  const input = document.getElementById('inp-' + id);
+  const name  = input ? input.value.trim() : '';
+  if (!name) { if(input) { input.style.borderColor='rgba(229,48,48,0.7)'; input.focus(); } return; }
+  const events = getEvents();
+  const ev = events.find(e => e.id === id);
+  if (!ev || ev.status === 'tomado') { render(); return; }
+  ev.status = 'tomado';
+  ev.employee = name;
+  save(EVENTS_KEY, events);
+  addLog(name, 'tomó el turno de', ev.name + ' · ' + ev.day);
+  render();
+}
+
+function release(id) {
+  if (!isAdmin) return;
+  const events = getEvents();
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  addLog('Admin', 'liberó el turno de', ev.name + ' · ' + ev.day + ' (era: ' + ev.employee + ')');
+  ev.status = 'libre';
+  ev.employee = '';
+  save(EVENTS_KEY, events);
+  render();
+}
+
+function addLog(name, action, event) {
+  const log = getLog();
+  log.unshift({ name, action, event, time: ts() });
+  if (log.length > 40) log.pop();
+  save(LOG_KEY, log);
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+  const events = getEvents();
+  const log    = getLog();
+  const grid   = document.getElementById('eventsGrid');
+  const logList= document.getElementById('logList');
+
+  grid.innerHTML = '';
+
+  if (!events.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.2);font-size:0.88rem;">No hay eventos cargados todavía.</div>';
+  }
+
+  events.forEach(ev => {
+    const taken = ev.status === 'tomado';
+    const card  = document.createElement('div');
+    card.className = 'card' + (taken ? ' taken' : '');
+
+    let rightHTML = '';
+    if (!taken) {
+      rightHTML = `
+        <input class="claim-input" id="inp-${ev.id}" placeholder="Tu nombre"
+               onkeydown="if(event.key==='Enter')claim(${ev.id})">
+        <button class="btn btn-primary" onclick="claim(${ev.id})">Tomar turno</button>
+      `;
+    } else {
+      rightHTML = `<span style="font-size:0.75rem;color:rgba(255,255,255,0.25);">Turno bloqueado</span>`;
+      if (isAdmin) {
+        rightHTML += `<button class="btn btn-sm btn-danger" onclick="release(${ev.id})">Liberar</button>`;
+      }
+    }
+
+    let deleteBtn = isAdmin
+      ? `<button class="btn btn-sm" style="color:rgba(255,48,48,0.5);border-color:rgba(255,48,48,0.15);" onclick="askDelete(${ev.id})" title="Eliminar evento">✕</button>`
+      : '';
+
+    card.innerHTML = `
+      <div class="card-left">
+        <div class="event-name">${ev.name}</div>
+        <div class="event-meta">
+          <span class="meta-item">📅 ${ev.day}</span>
+          <span class="meta-item">🕐 ${ev.time}</span>
+        </div>
+        ${taken
+          ? `<span class="badge-tomado">● Tomado</span>
+             <div class="employee-name">👤 ${ev.employee}</div>`
+          : `<span class="badge-libre">● Disponible</span>`
         }
+      </div>
+      <div class="card-right">
+        ${rightHTML}
+        ${deleteBtn}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
 
-        // Gestión de temas
-        function addTopic() {
-            const input = document.getElementById('newTopic');
-            const topic = input.value.trim();
-            if (topic && !gameState.topics.includes(topic)) {
-                gameState.topics.push(topic);
-                input.value = '';
-                renderTopics();
-            }
-        }
+  logList.innerHTML = '';
+  if (!log.length) {
+    logList.innerHTML = '<div class="log-empty">Sin actividad todavía.</div>';
+  } else {
+    log.slice(0, 15).forEach(entry => {
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = `
+        <span class="log-text"><strong>${entry.name}</strong> ${entry.action} <em>${entry.event}</em></span>
+        <span class="log-time">${entry.time}</span>
+      `;
+      logList.appendChild(item);
+    });
+  }
+}
 
-        function removeTopic(index) {
-            gameState.topics.splice(index, 1);
-            renderTopics();
-        }
+// ── INIT ──────────────────────────────────────────────────────
+// cerrar modales con Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal('adminModal');
+    closeModal('deleteModal');
+  }
+});
 
-        function renderTopics() {
-            const container = document.getElementById('topicsList');
-            container.innerHTML = gameState.topics.map((t, i) => `
-                <span class="topic-tag">
-                    ${t}
-                    <button onclick="removeTopic(${i})">×</button>
-                </span>
-            `).join('');
-        }
-
-        // Inicializar temas por defecto
-        renderTopics();
-
-        // Crear sala (Host)
-        function createRoom() {
-            gameState.myName = document.getElementById('hostName').value || 'Jugador 1';
-            gameState.roundTime = parseInt(document.getElementById('roundTime').value) || 60;
-            gameState.totalRounds = parseInt(document.getElementById('totalRounds').value) || 5;
-
-            if (gameState.topics.length === 0) {
-                alert('Agrega al menos un tema');
-                return;
-            }
-
-            isHost = true;
-            showScreen('waitingScreen');
-
-            // Crear peer con ID aleatorio
-            const roomCode = generateRoomCode();
-            document.getElementById('roomCode').textContent = roomCode;
-
-            peer = new Peer(roomCode, {
-                host: '0.peerjs.com',
-                port: 443,
-                secure: true
-            });
-
-            peer.on('open', (id) => {
-                console.log('Sala creada:', id);
-            });
-
-            peer.on('connection', (connection) => {
-                conn = connection;
-                setupConnection();
-            });
-
-            peer.on('error', (err) => {
-                console.error('Error:', err);
-                alert('Error al crear sala. Intenta de nuevo.');
-                location.reload();
-            });
-        }
-
-        // Unirse a sala (Guest)
-        function joinRoom() {
-            gameState.myName = document.getElementById('guestName').value || 'Jugador 2';
-            const code = document.getElementById('joinCode').value.trim().toLowerCase();
-
-            if (!code) {
-                alert('Ingresa un código válido');
-                return;
-            }
-
-            isHost = false;
-            
-            peer = new Peer({
-                host: '0.peerjs.com',
-                port: 443,
-                secure: true
-            });
-
-            peer.on('open', () => {
-                conn = peer.connect(code);
-                setupConnection();
-            });
-
-            peer.on('error', (err) => {
-                console.error('Error:', err);
-                alert('No se pudo conectar. Verifica el código.');
-            });
-        }
-
-        // Configurar conexión
-        function setupConnection() {
-            conn.on('open', () => {
-                document.getElementById('connectionStatus').textContent = '✅ Conectado';
-                document.getElementById('connectionStatus').className = 'status connected';
-
-                if (isHost) {
-                    // Enviar configuración al invitado
-                    conn.send({
-                        type: 'config',
-                        topics: gameState.topics,
-                        roundTime: gameState.roundTime,
-                        totalRounds: gameState.totalRounds,
-                        hostName: gameState.myName
-                    });
-                    startGame();
-                }
-            });
-
-            conn.on('data', (data) => {
-                handleData(data);
-            });
-
-            conn.on('close', () => {
-                document.getElementById('connectionStatus').textContent = '❌ Desconectado';
-                document.getElementById('connectionStatus').className = 'status disconnected';
-            });
-        }
-
-        // Manejar datos recibidos
-        function handleData(data) {
-            switch(data.type) {
-                case 'config':
-                    // Guest recibe configuración
-                    gameState.topics = data.topics;
-                    gameState.roundTime = data.roundTime;
-                    gameState.totalRounds = data.totalRounds;
-                    gameState.opponentName = data.hostName;
-                    showScreen('gameScreen');
-                    startGame();
-                    break;
-
-                case 'startRound':
-                    startRound(data.letter);
-                    break;
-
-                case 'answers':
-                    // Recibir respuestas del oponente
-                    gameState.opponentAnswers = data.answers;
-                    showRoundResults();
-                    break;
-
-                case 'nextRound':
-                    gameState.currentRound = data.round;
-                    if (gameState.currentRound <= gameState.totalRounds) {
-                        startRound(data.letter);
-                    } else {
-                        showFinalResults();
-                    }
-                    break;
-
-                case 'playerName':
-                    if (isHost) {
-                        gameState.opponentName = data.name;
-                    }
-                    break;
-            }
-        }
-
-        // Iniciar juego
-        function startGame() {
-            showScreen('gameScreen');
-            document.getElementById('totalRoundsDisplay').textContent = gameState.totalRounds;
-            
-            if (!isHost) {
-                // Guest envía su nombre
-                conn.send({ type: 'playerName', name: gameState.myName });
-                gameState.opponentName = 'Jugador 1';
-            } else {
-                gameState.opponentName = 'Jugador 2';
-            }
-
-            // Host inicia primera ronda
-            if (isHost) {
-                setTimeout(() => initiateRound(), 1000);
-            }
-        }
-
-        // Iniciar ronda (solo Host)
-        function initiateRound() {
-            const available = alphabet.split('').filter(l => !usedLetters.includes(l));
-            if (available.length === 0) usedLetters = [];
-            
-            const letter = available[Math.floor(Math.random() * available.length)];
-            usedLetters.push(letter);
-
-            conn.send({
-                type: 'startRound',
-                letter: letter
-            });
-            
-            startRound(letter);
-        }
-
-        // Comenzar ronda local
-        function startRound(letter) {
-            gameState.currentLetter = letter;
-            gameState.timeLeft = gameState.roundTime;
-            gameState.myAnswers = {};
-            gameState.opponentAnswers = {};
-            gameState.isMyTurn = true;
-
-            document.getElementById('currentLetter').textContent = letter;
-            document.getElementById('currentRound').textContent = gameState.currentRound;
-            document.getElementById('roundsLeft').textContent = `Quedan ${gameState.totalRounds - gameState.currentRound}`;
-
-            // Crear inputs
-            const grid = document.getElementById('topicsGrid');
-            grid.innerHTML = gameState.topics.map((topic, i) => `
-                <div class="topic-card">
-                    <span class="player-badge you">TÚ: ${gameState.myName}</span>
-                    <label>${topic}</label>
-                    <input type="text" 
-                           id="topic_${i}" 
-                           placeholder="${letter}..." 
-                           autocomplete="off"
-                           oninput="saveAnswer('${topic}', this.value)">
-                </div>
-            `).join('');
-
-            document.getElementById('turnIndicator').textContent = '¡Escribe tus respuestas!';
-            document.getElementById('turnIndicator').className = 'turn-indicator your-turn';
-            document.getElementById('stopBtn').disabled = false;
-
-            startTimer();
-        }
-
-        // Guardar respuesta
-        function saveAnswer(topic, value) {
-            gameState.myAnswers[topic] = value.trim();
-        }
-
-        // Temporizador
-        function startTimer() {
-            updateTimer();
-            gameState.timer = setInterval(() => {
-                gameState.timeLeft--;
-                updateTimer();
-                
-                if (gameState.timeLeft <= 0) {
-                    clearInterval(gameState.timer);
-                    finishRound();
-                }
-            }, 1000);
-        }
-
-        function updateTimer() {
-            const el = document.getElementById('timer');
-            el.textContent = gameState.timeLeft;
-            el.className = gameState.timeLeft <= 10 ? 'timer warning' : 'timer';
-        }
-
-        // STOP
-        function stopRound() {
-            clearInterval(gameState.timer);
-            finishRound();
-        }
-
-        // Terminar ronda
-        function finishRound() {
-            gameState.isMyTurn = false;
-            document.getElementById('turnIndicator').textContent = 'Esperando respuestas de tu oponente...';
-            document.getElementById('turnIndicator').className = 'turn-indicator';
-            document.getElementById('stopBtn').disabled = true;
-
-            // Deshabilitar inputs
-            document.querySelectorAll('.topic-card input').forEach(input => input.disabled = true);
-
-            // Enviar respuestas
-            conn.send({
-                type: 'answers',
-                answers: gameState.myAnswers
-            });
-
-            // Si ya tenemos respuestas del oponente, mostrar
-            if (Object.keys(gameState.opponentAnswers).length > 0) {
-                showRoundResults();
-            }
-        }
-
-        // Mostrar resultados de la ronda
-        function showRoundResults() {
-            // Guardar en historial
-            gameState.roundsHistory.push({
-                round: gameState.currentRound,
-                letter: gameState.currentLetter,
-                player1: isHost ? gameState.myAnswers : gameState.opponentAnswers,
-                player2: isHost ? gameState.opponentAnswers : gameState.myAnswers
-            });
-
-            // Preparar siguiente ronda o final
-            if (gameState.currentRound < gameState.totalRounds) {
-                gameState.currentRound++;
-                
-                setTimeout(() => {
-                    if (isHost) {
-                        setTimeout(() => initiateRound(), 2000);
-                    }
-                }, 3000);
-            } else {
-                if (isHost) {
-                    setTimeout(() => {
-                        conn.send({ type: 'nextRound', round: gameState.currentRound + 1 });
-                        showFinalResults();
-                    }, 3000);
-                }
-            }
-        }
-
-        // Mostrar resultados finales
-        function showFinalResults() {
-            showScreen('resultsScreen');
-            
-            document.getElementById('finalPlayer1').textContent = isHost ? gameState.myName : gameState.opponentName;
-            document.getElementById('finalPlayer2').textContent = isHost ? gameState.opponentName : gameState.myName;
-            document.getElementById('tableP1').textContent = isHost ? gameState.myName : gameState.opponentName;
-            document.getElementById('tableP2').textContent = isHost ? gameState.opponentName : gameState.myName;
-
-            // Contar respuestas no vacías
-            let score1 = 0, score2 = 0;
-            gameState.roundsHistory.forEach(r => {
-                score1 += Object.values(r.player1).filter(v => v && v !== '-').length;
-                score2 += Object.values(r.player2).filter(v => v && v !== '-').length;
-            });
-
-            document.getElementById('score1').textContent = score1;
-            document.getElementById('score2').textContent = score2;
-
-            // Tabla detallada
-            const tbody = document.querySelector('#resultsTable tbody');
-            tbody.innerHTML = gameState.roundsHistory.map(r => `
-                <tr>
-                    <td>${r.round}</td>
-                    <td><strong>${r.letter}</strong></td>
-                    <td>
-                        ${gameState.topics.map(t => 
-                            `${t}: ${r.player1[t] || '-'}`
-                        ).join('<br>')}
-                    </td>
-                    <td>
-                        ${gameState.topics.map(t => 
-                            `${t}: ${r.player2[t] || '-'}`
-                        ).join('<br>')}
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // Generar código de sala
-        function generateRoomCode() {
-            const parts = [];
-            for (let i = 0; i < 3; i++) {
-                parts.push(Math.random().toString(36).substring(2, 5));
-            }
-            return parts.join('-');
-        }
-
-        // Enter para agregar tema
-        document.getElementById('newTopic')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addTopic();
-        });
-    </script>
+// restaurar sesión admin si la tenía
+if (load(SESSION_KEY, false)) { isAdmin = true; }
+applyRole();
+</script>
 </body>
 </html>
