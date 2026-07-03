@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LA PARCA EVENTOSs · Panel</title>
+  <title>LA PARCA EVENTOS · Panel</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -204,7 +204,6 @@
 </head>
 <body>
 
-    <!-- MODAL ADMIN LOGIN -->
     <div class="modal-overlay" id="adminModal">
         <div class="modal">
             <div class="modal-title">🔐 Acceso administrador</div>
@@ -218,7 +217,6 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMAR BORRAR -->
     <div class="modal-overlay" id="deleteModal">
         <div class="modal">
             <div class="modal-title">⚠️ Eliminar evento</div>
@@ -232,7 +230,6 @@
 
     <div class="container">
 
-        <!-- HEADER -->
         <header class="header">
             <div class="brand">
                 <div class="skull">💀</div>
@@ -247,7 +244,6 @@
             </div>
         </header>
 
-        <!-- FORM NUEVO EVENTO (solo admin) -->
         <div class="add-form" id="addForm">
             <div class="add-form-title">+ Nuevo evento</div>
             <div class="add-row">
@@ -270,38 +266,34 @@
             </div>
         </div>
 
-        <!-- CARDS -->
         <div class="cards" id="eventsGrid"></div>
 
-        <!-- BOTON AGREGAR (solo admin) -->
         <button class="btn-add" id="addBtn" onclick="openAddForm()" style="display:none">
             ＋ Agregar evento
         </button>
 
         <div class="divider"></div>
 
-        <!-- LOG -->
         <div class="log-title">Actividad reciente</div>
         <div class="log-list" id="logList"></div>
 
         <div class="footer">La Parca Eventos · Sistema interno de empleados</div>
     </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // ─── CONFIGURACIÓN DE FIREBASE ───────────────────────────────
-        // REEMPLAZÁ ESTO CON TUS DATOS DE LA CONSOLA DE FIREBASE
         const firebaseConfig = {
-        apiKey: "AIzaSyAyXGayWLqBRZ8zinZDuVW1sYqltA3u87E",
-        authDomain: "la-parca-eventos.firebaseapp.com",
-        projectId: "la-parca-eventos",
-        storageBucket: "la-parca-eventos.firebasestorage.app",
-        messagingSenderId: "218322635610",
-        appId: "1:218322635610:web:9cb94d9540c72dc78d4163"
+            apiKey: "AIzaSyAyXGayWLqBRZ8zinZDuVW1sYqltA3u87E",
+            authDomain: "la-parca-eventos.firebaseapp.com",
+            projectId: "la-parca-eventos",
+            storageBucket: "la-parca-eventos.firebasestorage.app",
+            messagingSenderId: "218322635610",
+            appId: "1:218322635610:web:9cb94d9540c72dc78d4163"
         };
 
-        // Inicializar Firebase y Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         // ─────────────────────────────────────────────────────────────
@@ -312,260 +304,256 @@
         let isAdmin = false;
         let pendingDeleteId = null;
 
-        // Estructura inicial por si la base de datos está vacía en Firebase
         const defaultEvents = [
-        { id: 1, name: 'Expo Tuning', day: 'Lunes 06/07', time: '19:00hs', status: 'libre', employee: '' },
-        { id: 2, name: 'Expo Tuning', day: 'Martes 07/07', time: '18:00hs', status: 'libre', employee: '' }
+            { id: 1, name: 'Expo Tuning', day: 'Lunes 06/07', time: '19:00hs', status: 'libre', employee: '' },
+            { id: 2, name: 'Expo Tuning', day: 'Martes 07/07', time: '18:00hs', status: 'libre', employee: '' }
         ];
 
-        // Variables globales para guardar lo que viene de la BD
         let currentEvents = [];
         let currentLog = [];
 
         function ts() {
-        return new Date().toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+            return new Date().toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
         }
 
-        // ── ESCUCHA EN TIEMPO REAL DESDE FIREBASE ─────────────────────
-        // Guardaremos todo en un documento único dentro de la colección 'parca' llamado 'datos'
+        // ── ESCUCHA EN TIEMPO REAL CORREGIDA ──────────────────────────
         onSnapshot(doc(db, "parca", "datos"), (docSnap) => {
-        if (docSnap.exists()) {
-        const data = docSnap.data();
-        currentEvents = data.events || [];
-        currentLog = data.log || [];
-        } else {
-        // Si es la primera vez, creamos el documento con los eventos por defecto
-        currentEvents = defaultEvents;
-        currentLog = [];
-        setDoc(doc(db, "parca", "datos"), { events: currentEvents, log: currentLog });
-        }
-        render();
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                currentEvents = data.events || [];
+                currentLog = data.log || [];
+            } else {
+                currentEvents = defaultEvents;
+                currentLog = [];
+                setDoc(doc(db, "parca", "datos"), { events: currentEvents, log: currentLog });
+            }
+            // CORRECCIÓN: El render debe estar fuera del else para que dibuje CADA cambio en tiempo real
+            render(); 
         });
 
-        // Función auxiliar para subir cambios a Firebase
         async function actualizarBaseDeDatos(nuevosEventos, nuevoLog) {
-        try {
-        await updateDoc(doc(db, "parca", "datos"), {
-        events: nuevosEventos,
-        log: nuevoLog
-        });
-        } catch (error) {
-        console.error("Error al actualizar Firebase:", error);
-        }
+            try {
+                await updateDoc(doc(db, "parca", "datos"), {
+                    events: nuevosEventos,
+                    log: nuevoLog
+                });
+            } catch (error) {
+                console.error("Error al actualizar Firebase:", error);
+            }
         }
 
         // ── ADMIN AUTH ────────────────────────────────────────────────
         window.handleAdminToggle = function() {
-        if (isAdmin) { logoutAdmin(); return; }
-        document.getElementById('adminPassInput').value = '';
-        document.getElementById('loginError').style.display = 'none';
-        document.getElementById('adminModal').classList.add('open');
-        setTimeout(() => document.getElementById('adminPassInput').focus(), 100);
+            if (isAdmin) { logoutAdmin(); return; }
+            document.getElementById('adminPassInput').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('adminModal').classList.add('open');
+            setTimeout(() => document.getElementById('adminPassInput').focus(), 100);
         }
 
         window.tryLogin = function() {
-        const val = document.getElementById('adminPassInput').value;
-        if (val === ADMIN_PASSWORD) {
-        isAdmin = true;
-        try { localStorage.setItem(SESSION_KEY, "true"); } catch {}
-        closeModal('adminModal');
-        applyRole();
-        } else {
-        document.getElementById('loginError').style.display = 'block';
-        document.getElementById('adminPassInput').value = '';
-        document.getElementById('adminPassInput').focus();
-        }
+            const val = document.getElementById('adminPassInput').value;
+            if (val === ADMIN_PASSWORD) {
+                isAdmin = true;
+                try { localStorage.setItem(SESSION_KEY, "true"); } catch {}
+                closeModal('adminModal');
+                applyRole();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('adminPassInput').value = '';
+                document.getElementById('adminPassInput').focus();
+            }
         }
 
         function logoutAdmin() {
-        isAdmin = false;
-        try { localStorage.removeItem(SESSION_KEY); } catch {}
-        applyRole();
+            isAdmin = false;
+            try { localStorage.removeItem(SESSION_KEY); } catch {}
+            applyRole();
         }
 
         function applyRole() {
-        document.getElementById('roleBadge').textContent = isAdmin ? 'Administrador' : 'Empleado';
-        document.getElementById('roleBadge').className = isAdmin ? 'admin-badge' : 'employee-badge';
-        document.getElementById('adminToggleBtn').textContent = isAdmin ? 'Cerrar sesión' : 'Modo admin';
-        document.getElementById('addBtn').style.display = isAdmin ? '' : 'none';
-        render();
+            document.getElementById('roleBadge').textContent = isAdmin ? 'Administrador' : 'Empleado';
+            document.getElementById('roleBadge').className = isAdmin ? 'admin-badge' : 'employee-badge';
+            document.getElementById('adminToggleBtn').textContent = isAdmin ? 'Cerrar sesión' : 'Modo admin';
+            document.getElementById('addBtn').style.display = isAdmin ? '' : 'none';
+            render();
         }
 
         window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); }
 
         // ── ADD FORM ──────────────────────────────────────────────────
         window.openAddForm = function() {
-        document.getElementById('addForm').classList.add('open');
-        document.getElementById('addBtn').style.display = 'none';
+            document.getElementById('addForm').classList.add('open');
+            document.getElementById('addBtn').style.display = 'none';
         }
         window.closeAddForm = function() {
-        document.getElementById('addForm').classList.remove('open');
-        document.getElementById('addBtn').style.display = '';
-        ['newName', 'newDay', 'newTime'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('addForm').classList.remove('open');
+            document.getElementById('addBtn').style.display = '';
+            ['newName', 'newDay', 'newTime'].forEach(id => document.getElementById(id).value = '');
         }
         window.confirmAdd = function() {
-        const name = document.getElementById('newName').value.trim();
-        const day = document.getElementById('newDay').value.trim();
-        const time = document.getElementById('newTime').value.trim();
-        if (!name || !day || !time) return;
+            const name = document.getElementById('newName').value.trim();
+            const day = document.getElementById('newDay').value.trim();
+            const time = document.getElementById('newTime').value.trim();
+            if (!name || !day || !time) return;
 
-        const nuevosEventos = [...currentEvents];
-        nuevosEventos.push({ id: Date.now(), name, day, time, status: 'libre', employee: '' });
+            const nuevosEventos = [...currentEvents];
+            nuevosEventos.push({ id: Date.now(), name, day, time, status: 'libre', employee: '' });
 
-        const nuevoLog = [{ name: 'Admin', action: 'agregó el evento', event: name + ' · ' + day, time: ts() }, ...currentLog];
-        if (nuevoLog.length > 40) nuevoLog.pop();
+            const nuevoLog = [{ name: 'Admin', action: 'agregó el evento', event: name + ' · ' + day, time: ts() }, ...currentLog];
+            if (nuevoLog.length > 40) nuevoLog.pop();
 
-        actualizarBaseDeDatos(nuevosEventos, nuevoLog);
-        closeAddForm();
+            actualizarBaseDeDatos(nuevosEventos, nuevoLog);
+            closeAddForm();
         }
 
         // ── DELETE ────────────────────────────────────────────────────
         window.askDelete = function(id) {
-        const ev = currentEvents.find(e => e.id === id);
-        if (!ev) return;
-        pendingDeleteId = id;
-        document.getElementById('deleteModalText').textContent = '¿Seguro que querés eliminar "' + ev.name + ' · ' + ev.day + '"?';
-        document.getElementById('deleteModal').classList.add('open');
+            const ev = currentEvents.find(e => e.id === id);
+            if (!ev) return;
+            pendingDeleteId = id;
+            document.getElementById('deleteModalText').textContent = '¿Seguro que querés eliminar "' + ev.name + ' · ' + ev.day + '"?';
+            document.getElementById('deleteModal').classList.add('open');
         }
         window.confirmDelete = function() {
-        if (!pendingDeleteId) return;
-        const ev = currentEvents.find(e => e.id === pendingDeleteId);
-        const filtered = currentEvents.filter(e => e.id !== pendingDeleteId);
+            if (!pendingDeleteId) return;
+            const ev = currentEvents.find(e => e.id === pendingDeleteId);
+            const filtered = currentEvents.filter(e => e.id !== pendingDeleteId);
 
-        let nuevoLog = [...currentLog];
-        if (ev) {
-        nuevoLog.unshift({ name: 'Admin', action: 'eliminó el evento', event: ev.name + ' · ' + ev.day, time: ts() });
-        }
-        if (nuevoLog.length > 40) nuevoLog.pop();
+            let nuevoLog = [...currentLog];
+            if (ev) {
+                nuevoLog.unshift({ name: 'Admin', action: 'eliminó el evento', event: ev.name + ' · ' + ev.day, time: ts() });
+            }
+            if (nuevoLog.length > 40) nuevoLog.pop();
 
-        actualizarBaseDeDatos(filtered, nuevoLog);
-        pendingDeleteId = null;
-        closeModal('deleteModal');
+            actualizarBaseDeDatos(filtered, nuevoLog);
+            pendingDeleteId = null;
+            closeModal('deleteModal');
         }
 
         // ── CLAIM / RELEASE ───────────────────────────────────────────
         window.claim = function(id) {
-        const input = document.getElementById('inp-' + id);
-        const name = input ? input.value.trim() : '';
-        if (!name) { if (input) { input.style.borderColor = 'rgba(229,48,48,0.7)'; input.focus(); } return; }
+            const input = document.getElementById('inp-' + id);
+            const name = input ? input.value.trim() : '';
+            if (!name) { if (input) { input.style.borderColor = 'rgba(229,48,48,0.7)'; input.focus(); } return; }
 
-        const nuevosEventos = currentEvents.map(ev => {
-        if (ev.id === id && ev.status !== 'tomado') {
-        return { ...ev, status: 'tomado', employee: name };
-        }
-        return ev;
-        });
+            const nuevosEventos = currentEvents.map(ev => {
+                if (ev.id === id && ev.status !== 'tomado') {
+                    return { ...ev, status: 'tomado', employee: name };
+                }
+                return ev;
+            });
 
-        const evOriginal = currentEvents.find(e => e.id === id);
-        if (!evOriginal || evOriginal.status === 'tomado') return;
+            const evOriginal = currentEvents.find(e => e.id === id);
+            if (!evOriginal || evOriginal.status === 'tomado') return;
 
-        const nuevoLog = [{ name, action: 'tomó el turno de', event: evOriginal.name + ' · ' + evOriginal.day, time: ts() }, ...currentLog];
-        if (nuevoLog.length > 40) nuevoLog.pop();
+            const nuevoLog = [{ name, action: 'tomó el turno de', event: evOriginal.name + ' · ' + evOriginal.day, time: ts() }, ...currentLog];
+            if (nuevoLog.length > 40) nuevoLog.pop();
 
-        actualizarBaseDeDatos(nuevosEventos, nuevoLog);
+            actualizarBaseDeDatos(nuevosEventos, nuevoLog);
         }
 
         window.release = function(id) {
-        if (!isAdmin) return;
+            if (!isAdmin) return;
 
-        const evOriginal = currentEvents.find(e => e.id === id);
-        if (!evOriginal) return;
+            const evOriginal = currentEvents.find(e => e.id === id);
+            if (!evOriginal) return;
 
-        const nuevosEventos = currentEvents.map(ev => {
-        if (ev.id === id) {
-        return { ...ev, status: 'libre', employee: '' };
-        }
-        return ev;
-        });
+            const nuevosEventos = currentEvents.map(ev => {
+                if (ev.id === id) {
+                    return { ...ev, status: 'libre', employee: '' };
+                }
+                return ev;
+            });
 
-        const nuevoLog = [{ name: 'Admin', action: 'liberó el turno de', event: evOriginal.name + ' · ' + evOriginal.day + ' (era: ' + evOriginal.employee + ')', time: ts() }, ...currentLog];
-        if (nuevoLog.length > 40) nuevoLog.pop();
+            const nuevoLog = [{ name: 'Admin', action: 'liberó el turno de', event: evOriginal.name + ' · ' + evOriginal.day + ' (era: ' + evOriginal.employee + ')', time: ts() }, ...currentLog];
+            if (nuevoLog.length > 40) nuevoLog.pop();
 
-        actualizarBaseDeDatos(nuevosEventos, nuevoLog);
+            actualizarBaseDeDatos(nuevosEventos, nuevoLog);
         }
 
         // ── RENDER ────────────────────────────────────────────────────
         function render() {
-        const grid = document.getElementById('eventsGrid');
-        const logList = document.getElementById('logList');
-        if(!grid || !logList) return;
+            const grid = document.getElementById('eventsGrid');
+            const logList = document.getElementById('logList');
+            if(!grid || !logList) return;
 
-        grid.innerHTML = '';
+            grid.innerHTML = '';
 
-        if (!currentEvents.length) {
-        grid.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.2);font-size:0.88rem;">No hay eventos cargados todavía.</div>';
-        }
+            if (!currentEvents.length) {
+                grid.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.2);font-size:0.88rem;">No hay eventos cargados todavía.</div>';
+            }
 
-        currentEvents.forEach(ev => {
-        const taken = ev.status === 'tomado';
-        const card = document.createElement('div');
-        card.className = 'card' + (taken ? ' taken' : '');
+            currentEvents.forEach(ev => {
+                const taken = ev.status === 'tomado';
+                const card = document.createElement('div');
+                card.className = 'card' + (taken ? ' taken' : '');
 
-        let rightHTML = '';
-        if (!taken) {
-        rightHTML = `
-        <input class="claim-input" id="inp-${ev.id}" placeholder="Tu nombre"
-        onkeydown="if(event.key==='Enter')window.claim(${ev.id})">
-        <button class="btn btn-primary" onclick="window.claim(${ev.id})">Tomar turno</button>
-        `;
-        } else {
-        rightHTML = `<span style="font-size:0.75rem;color:rgba(255,255,255,0.25);">Turno bloqueado</span>`;
-        if (isAdmin) {
-        rightHTML += `<button class="btn btn-sm btn-danger" onclick="window.release(${ev.id})">Liberar</button>`;
-        }
-        }
+                let rightHTML = '';
+                if (!taken) {
+                    rightHTML = `
+                        <input class="claim-input" id="inp-${ev.id}" placeholder="Tu nombre"
+                        onkeydown="if(event.key==='Enter')window.claim(${ev.id})">
+                        <button class="btn btn-primary" onclick="window.claim(${ev.id})">Tomar turno</button>
+                    `;
+                } else {
+                    rightHTML = `<span style="font-size:0.75rem;color:rgba(255,255,255,0.25);">Turno bloqueado</span>`;
+                    if (isAdmin) {
+                        rightHTML += `<button class="btn btn-sm btn-danger" onclick="window.release(${ev.id})">Liberar</button>`;
+                    }
+                }
 
-        let deleteBtn = isAdmin
-        ? `<button class="btn btn-sm" style="color:rgba(255,48,48,0.5);border-color:rgba(255,48,48,0.15);" onclick="window.askDelete(${ev.id})" title="Eliminar evento">✕</button>`
-        : '';
+                let deleteBtn = isAdmin
+                    ? `<button class="btn btn-sm" style="color:rgba(255,48,48,0.5);border-color:rgba(255,48,48,0.15);" onclick="window.askDelete(${ev.id})" title="Eliminar evento">✕</button>`
+                    : '';
 
-        card.innerHTML = `
-        <div class="card-left">
-        <div class="event-name">${ev.name}</div>
-        <div class="event-meta">
-        <span class="meta-item">📅 ${ev.day}</span>
-        <span class="meta-item">🕐 ${ev.time}</span>
-        </div>
-        ${taken
-        ? `<span class="badge-tomado">● Tomado</span>
-        <div class="employee-name">👤 ${ev.employee}</div>`
-        : `<span class="badge-libre">● Disponible</span>`
-        }
-        </div>
-        <div class="card-right">
-        ${rightHTML}
-        ${deleteBtn}
-        </div>
-        `;
-        grid.appendChild(card);
-        });
+                card.innerHTML = `
+                    <div class="card-left">
+                        <div class="event-name">${ev.name}</div>
+                        <div class="event-meta">
+                            <span class="meta-item">📅 ${ev.day}</span>
+                            <span class="meta-item">🕐 ${ev.time}</span>
+                        </div>
+                        ${taken
+                            ? `<span class="badge-tomado">● Tomado</span>
+                               <div class="employee-name">👤 ${ev.employee}</div>`
+                            : `<span class="badge-libre">● Disponible</span>`
+                        }
+                    </div>
+                    <div class="card-right">
+                        ${rightHTML}
+                        ${deleteBtn}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
 
-        logList.innerHTML = '';
-        if (!currentLog.length) {
-        logList.innerHTML = '<div class="log-empty">Sin actividad todavía.</div>';
-        } else {
-        currentLog.slice(0, 15).forEach(entry => {
-        const item = document.createElement('div');
-        item.className = 'log-item';
-        item.innerHTML = `
-        <span class="log-text"><strong>${entry.name}</strong> ${entry.action} <em>${entry.event}</em></span>
-        <span class="log-time">${entry.time}</span>
-        `;
-        logList.appendChild(item);
-        });
-        }
+            logList.innerHTML = '';
+            if (!currentLog.length) {
+                logList.innerHTML = '<div class="log-empty">Sin actividad todavía.</div>';
+            } else {
+                currentLog.slice(0, 15).forEach(entry => {
+                    const item = document.createElement('div');
+                    item.className = 'log-item';
+                    item.innerHTML = `
+                        <span class="log-text"><strong>${entry.name}</strong> ${entry.action} <em>${entry.event}</em></span>
+                        <span class="log-time">${entry.time}</span>
+                    `;
+                    logList.appendChild(item);
+                });
+            }
         }
 
         // ── INIT ──────────────────────────────────────────────────────
         document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-        closeModal('adminModal');
-        closeModal('deleteModal');
-        }
+            if (e.key === 'Escape') {
+                closeModal('adminModal');
+                closeModal('deleteModal');
+            }
         });
 
         try {
-        if (localStorage.getItem(SESSION_KEY) === "true") { isAdmin = true; }
+            if (localStorage.getItem(SESSION_KEY) === "true") { isAdmin = true; }
         } catch {}
         applyRole();
     </script>
