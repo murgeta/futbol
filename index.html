@@ -204,320 +204,370 @@
 </head>
 <body>
 
-<!-- MODAL ADMIN LOGIN -->
-<div class="modal-overlay" id="adminModal">
-  <div class="modal">
-    <div class="modal-title">🔐 Acceso administrador</div>
-    <div class="modal-sub">Ingresá la contraseña de La Parca Eventos</div>
-    <input class="modal-input" type="password" id="adminPassInput" placeholder="Contraseña" onkeydown="if(event.key==='Enter')tryLogin()">
-    <div class="modal-error" id="loginError">Contraseña incorrecta.</div>
-    <div class="modal-actions">
-      <button class="btn btn-primary" onclick="tryLogin()">Ingresar</button>
-      <button class="btn" onclick="closeModal('adminModal')">Cancelar</button>
+    <!-- MODAL ADMIN LOGIN -->
+    <div class="modal-overlay" id="adminModal">
+        <div class="modal">
+            <div class="modal-title">🔐 Acceso administrador</div>
+            <div class="modal-sub">Ingresá la contraseña de La Parca Eventos</div>
+            <input class="modal-input" type="password" id="adminPassInput" placeholder="Contraseña" onkeydown="if(event.key==='Enter')tryLogin()">
+            <div class="modal-error" id="loginError">Contraseña incorrecta.</div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="tryLogin()">Ingresar</button>
+                <button class="btn" onclick="closeModal('adminModal')">Cancelar</button>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<!-- MODAL CONFIRMAR BORRAR -->
-<div class="modal-overlay" id="deleteModal">
-  <div class="modal">
-    <div class="modal-title">⚠️ Eliminar evento</div>
-    <div class="modal-sub" id="deleteModalText">¿Seguro que querés eliminar este evento?</div>
-    <div class="modal-actions">
-      <button class="btn btn-danger" onclick="confirmDelete()">Sí, eliminar</button>
-      <button class="btn" onclick="closeModal('deleteModal')">Cancelar</button>
+    <!-- MODAL CONFIRMAR BORRAR -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-title">⚠️ Eliminar evento</div>
+            <div class="modal-sub" id="deleteModalText">¿Seguro que querés eliminar este evento?</div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" onclick="confirmDelete()">Sí, eliminar</button>
+                <button class="btn" onclick="closeModal('deleteModal')">Cancelar</button>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<div class="container">
+    <div class="container">
 
-  <!-- HEADER -->
-  <header class="header">
-    <div class="brand">
-      <div class="skull">💀</div>
-      <div>
-        <div class="brand-name"><span>LA PARCA</span> EVENTOS</div>
-        <div class="brand-sub">Empresa de eventos · GTA Hub</div>
-      </div>
+        <!-- HEADER -->
+        <header class="header">
+            <div class="brand">
+                <div class="skull">💀</div>
+                <div>
+                    <div class="brand-name"><span>LA PARCA</span> EVENTOS</div>
+                    <div class="brand-sub">Empresa de eventos · GTA Hub</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <span id="roleBadge" class="employee-badge">Empleado</span>
+                <button class="btn btn-sm" id="adminToggleBtn" onclick="handleAdminToggle()">Modo admin</button>
+            </div>
+        </header>
+
+        <!-- FORM NUEVO EVENTO (solo admin) -->
+        <div class="add-form" id="addForm">
+            <div class="add-form-title">+ Nuevo evento</div>
+            <div class="add-row">
+                <div class="add-field">
+                    <label class="add-label">Nombre del evento</label>
+                    <input id="newName" class="add-input" placeholder="Ej: Expo Tuning">
+                </div>
+                <div class="add-field">
+                    <label class="add-label">Día y fecha</label>
+                    <input id="newDay" class="add-input" placeholder="Ej: Jueves 10/07">
+                </div>
+                <div class="add-field">
+                    <label class="add-label">Hora (ARG)</label>
+                    <input id="newTime" class="add-input" placeholder="Ej: 21:00hs">
+                </div>
+            </div>
+            <div class="add-actions">
+                <button class="btn btn-primary" onclick="confirmAdd()">Agregar evento</button>
+                <button class="btn" onclick="closeAddForm()">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- CARDS -->
+        <div class="cards" id="eventsGrid"></div>
+
+        <!-- BOTON AGREGAR (solo admin) -->
+        <button class="btn-add" id="addBtn" onclick="openAddForm()" style="display:none">
+            ＋ Agregar evento
+        </button>
+
+        <div class="divider"></div>
+
+        <!-- LOG -->
+        <div class="log-title">Actividad reciente</div>
+        <div class="log-list" id="logList"></div>
+
+        <div class="footer">La Parca Eventos · Sistema interno de empleados</div>
     </div>
-    <div class="header-right">
-      <span id="roleBadge" class="employee-badge">Empleado</span>
-      <button class="btn btn-sm" id="adminToggleBtn" onclick="handleAdminToggle()">Modo admin</button>
-    </div>
-  </header>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  <!-- FORM NUEVO EVENTO (solo admin) -->
-  <div class="add-form" id="addForm">
-    <div class="add-form-title">+ Nuevo evento</div>
-    <div class="add-row">
-      <div class="add-field">
-        <label class="add-label">Nombre del evento</label>
-        <input id="newName" class="add-input" placeholder="Ej: Expo Tuning">
-      </div>
-      <div class="add-field">
-        <label class="add-label">Día y fecha</label>
-        <input id="newDay" class="add-input" placeholder="Ej: Jueves 10/07">
-      </div>
-      <div class="add-field">
-        <label class="add-label">Hora (ARG)</label>
-        <input id="newTime" class="add-input" placeholder="Ej: 21:00hs">
-      </div>
-    </div>
-    <div class="add-actions">
-      <button class="btn btn-primary" onclick="confirmAdd()">Agregar evento</button>
-      <button class="btn" onclick="closeAddForm()">Cancelar</button>
-    </div>
-  </div>
+        // ─── CONFIGURACIÓN DE FIREBASE ───────────────────────────────
+        // REEMPLAZÁ ESTO CON TUS DATOS DE LA CONSOLA DE FIREBASE
+        const firebaseConfig = {
+        apiKey: "AIzaSyAyXGayWLqBRZ8zinZDuVW1sYqltA3u87E",
+        authDomain: "la-parca-eventos.firebaseapp.com",
+        projectId: "la-parca-eventos",
+        storageBucket: "la-parca-eventos.firebasestorage.app",
+        messagingSenderId: "218322635610",
+        appId: "1:218322635610:web:9cb94d9540c72dc78d4163"
+        };
 
-  <!-- CARDS -->
-  <div class="cards" id="eventsGrid"></div>
+        // Inicializar Firebase y Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        // ─────────────────────────────────────────────────────────────
 
-  <!-- BOTON AGREGAR (solo admin) -->
-  <button class="btn-add" id="addBtn" onclick="openAddForm()" style="display:none">
-    ＋ Agregar evento
-  </button>
+        const ADMIN_PASSWORD = 'laparca2024';
+        const SESSION_KEY = 'lp4_admin';
 
-  <div class="divider"></div>
+        let isAdmin = false;
+        let pendingDeleteId = null;
 
-  <!-- LOG -->
-  <div class="log-title">Actividad reciente</div>
-  <div class="log-list" id="logList"></div>
+        // Estructura inicial por si la base de datos está vacía en Firebase
+        const defaultEvents = [
+        { id: 1, name: 'Expo Tuning', day: 'Lunes 06/07', time: '19:00hs', status: 'libre', employee: '' },
+        { id: 2, name: 'Expo Tuning', day: 'Martes 07/07', time: '18:00hs', status: 'libre', employee: '' }
+        ];
 
-  <div class="footer">La Parca Eventos · Sistema interno de empleados</div>
-</div>
+        // Variables globales para guardar lo que viene de la BD
+        let currentEvents = [];
+        let currentLog = [];
 
-<script>
-// ─── CONFIGURACIÓN ───────────────────────────────────────────
-// CAMBIÁ ESTA CONTRASEÑA POR LA TUYA
-const ADMIN_PASSWORD = 'laparca2024';
-// ─────────────────────────────────────────────────────────────
+        function ts() {
+        return new Date().toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+        }
 
-const EVENTS_KEY = 'lp4_events';
-const LOG_KEY    = 'lp4_log';
-const SESSION_KEY= 'lp4_admin';
+        // ── ESCUCHA EN TIEMPO REAL DESDE FIREBASE ─────────────────────
+        // Guardaremos todo en un documento único dentro de la colección 'parca' llamado 'datos'
+        onSnapshot(doc(db, "parca", "datos"), (docSnap) => {
+        if (docSnap.exists()) {
+        const data = docSnap.data();
+        currentEvents = data.events || [];
+        currentLog = data.log || [];
+        } else {
+        // Si es la primera vez, creamos el documento con los eventos por defecto
+        currentEvents = defaultEvents;
+        currentLog = [];
+        setDoc(doc(db, "parca", "datos"), { events: currentEvents, log: currentLog });
+        }
+        render();
+        });
 
-let isAdmin = false;
-let pendingDeleteId = null;
+        // Función auxiliar para subir cambios a Firebase
+        async function actualizarBaseDeDatos(nuevosEventos, nuevoLog) {
+        try {
+        await updateDoc(doc(db, "parca", "datos"), {
+        events: nuevosEventos,
+        log: nuevoLog
+        });
+        } catch (error) {
+        console.error("Error al actualizar Firebase:", error);
+        }
+        }
 
-const defaultEvents = [
-  { id:1, name:'Expo Tuning', day:'Lunes 06/07',  time:'19:00hs', status:'libre', employee:'' },
-  { id:2, name:'Expo Tuning', day:'Martes 07/07', time:'18:00hs', status:'libre', employee:'' }
-];
+        // ── ADMIN AUTH ────────────────────────────────────────────────
+        window.handleAdminToggle = function() {
+        if (isAdmin) { logoutAdmin(); return; }
+        document.getElementById('adminPassInput').value = '';
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('adminModal').classList.add('open');
+        setTimeout(() => document.getElementById('adminPassInput').focus(), 100);
+        }
 
-function load(key, def) {
-  try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : def; } catch { return def; }
-}
-function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
-function getEvents() { return load(EVENTS_KEY, JSON.parse(JSON.stringify(defaultEvents))); }
-function getLog()    { return load(LOG_KEY, []); }
-function ts() {
-  return new Date().toLocaleString('es-AR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
-}
+        window.tryLogin = function() {
+        const val = document.getElementById('adminPassInput').value;
+        if (val === ADMIN_PASSWORD) {
+        isAdmin = true;
+        try { localStorage.setItem(SESSION_KEY, "true"); } catch {}
+        closeModal('adminModal');
+        applyRole();
+        } else {
+        document.getElementById('loginError').style.display = 'block';
+        document.getElementById('adminPassInput').value = '';
+        document.getElementById('adminPassInput').focus();
+        }
+        }
 
-// ── ADMIN AUTH ────────────────────────────────────────────────
-function handleAdminToggle() {
-  if (isAdmin) { logoutAdmin(); return; }
-  document.getElementById('adminPassInput').value = '';
-  document.getElementById('loginError').style.display = 'none';
-  document.getElementById('adminModal').classList.add('open');
-  setTimeout(() => document.getElementById('adminPassInput').focus(), 100);
-}
+        function logoutAdmin() {
+        isAdmin = false;
+        try { localStorage.removeItem(SESSION_KEY); } catch {}
+        applyRole();
+        }
 
-function tryLogin() {
-  const val = document.getElementById('adminPassInput').value;
-  if (val === ADMIN_PASSWORD) {
-    isAdmin = true;
-    save(SESSION_KEY, true);
-    closeModal('adminModal');
-    applyRole();
-  } else {
-    document.getElementById('loginError').style.display = 'block';
-    document.getElementById('adminPassInput').value = '';
-    document.getElementById('adminPassInput').focus();
-  }
-}
+        function applyRole() {
+        document.getElementById('roleBadge').textContent = isAdmin ? 'Administrador' : 'Empleado';
+        document.getElementById('roleBadge').className = isAdmin ? 'admin-badge' : 'employee-badge';
+        document.getElementById('adminToggleBtn').textContent = isAdmin ? 'Cerrar sesión' : 'Modo admin';
+        document.getElementById('addBtn').style.display = isAdmin ? '' : 'none';
+        render();
+        }
 
-function logoutAdmin() {
-  isAdmin = false;
-  localStorage.removeItem(SESSION_KEY);
-  applyRole();
-}
+        window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); }
 
-function applyRole() {
-  document.getElementById('roleBadge').textContent  = isAdmin ? 'Administrador' : 'Empleado';
-  document.getElementById('roleBadge').className    = isAdmin ? 'admin-badge' : 'employee-badge';
-  document.getElementById('adminToggleBtn').textContent = isAdmin ? 'Cerrar sesión' : 'Modo admin';
-  document.getElementById('addBtn').style.display   = isAdmin ? '' : 'none';
-  render();
-}
+        // ── ADD FORM ──────────────────────────────────────────────────
+        window.openAddForm = function() {
+        document.getElementById('addForm').classList.add('open');
+        document.getElementById('addBtn').style.display = 'none';
+        }
+        window.closeAddForm = function() {
+        document.getElementById('addForm').classList.remove('open');
+        document.getElementById('addBtn').style.display = '';
+        ['newName', 'newDay', 'newTime'].forEach(id => document.getElementById(id).value = '');
+        }
+        window.confirmAdd = function() {
+        const name = document.getElementById('newName').value.trim();
+        const day = document.getElementById('newDay').value.trim();
+        const time = document.getElementById('newTime').value.trim();
+        if (!name || !day || !time) return;
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        const nuevosEventos = [...currentEvents];
+        nuevosEventos.push({ id: Date.now(), name, day, time, status: 'libre', employee: '' });
 
-// ── ADD FORM ──────────────────────────────────────────────────
-function openAddForm() {
-  document.getElementById('addForm').classList.add('open');
-  document.getElementById('addBtn').style.display = 'none';
-}
-function closeAddForm() {
-  document.getElementById('addForm').classList.remove('open');
-  document.getElementById('addBtn').style.display = '';
-  ['newName','newDay','newTime'].forEach(id => document.getElementById(id).value = '');
-}
-function confirmAdd() {
-  const name = document.getElementById('newName').value.trim();
-  const day  = document.getElementById('newDay').value.trim();
-  const time = document.getElementById('newTime').value.trim();
-  if (!name || !day || !time) return;
-  const events = getEvents();
-  events.push({ id: Date.now(), name, day, time, status:'libre', employee:'' });
-  save(EVENTS_KEY, events);
-  addLog('Admin', 'agregó el evento', name + ' · ' + day);
-  closeAddForm();
-  render();
-}
+        const nuevoLog = [{ name: 'Admin', action: 'agregó el evento', event: name + ' · ' + day, time: ts() }, ...currentLog];
+        if (nuevoLog.length > 40) nuevoLog.pop();
 
-// ── DELETE ────────────────────────────────────────────────────
-function askDelete(id) {
-  const events = getEvents();
-  const ev = events.find(e => e.id === id);
-  if (!ev) return;
-  pendingDeleteId = id;
-  document.getElementById('deleteModalText').textContent =
-    '¿Seguro que querés eliminar "' + ev.name + ' · ' + ev.day + '"?';
-  document.getElementById('deleteModal').classList.add('open');
-}
-function confirmDelete() {
-  if (!pendingDeleteId) return;
-  const events = getEvents();
-  const ev = events.find(e => e.id === pendingDeleteId);
-  const filtered = events.filter(e => e.id !== pendingDeleteId);
-  save(EVENTS_KEY, filtered);
-  if (ev) addLog('Admin', 'eliminó el evento', ev.name + ' · ' + ev.day);
-  pendingDeleteId = null;
-  closeModal('deleteModal');
-  render();
-}
+        actualizarBaseDeDatos(nuevosEventos, nuevoLog);
+        closeAddForm();
+        }
 
-// ── CLAIM / RELEASE ───────────────────────────────────────────
-function claim(id) {
-  const input = document.getElementById('inp-' + id);
-  const name  = input ? input.value.trim() : '';
-  if (!name) { if(input) { input.style.borderColor='rgba(229,48,48,0.7)'; input.focus(); } return; }
-  const events = getEvents();
-  const ev = events.find(e => e.id === id);
-  if (!ev || ev.status === 'tomado') { render(); return; }
-  ev.status = 'tomado';
-  ev.employee = name;
-  save(EVENTS_KEY, events);
-  addLog(name, 'tomó el turno de', ev.name + ' · ' + ev.day);
-  render();
-}
+        // ── DELETE ────────────────────────────────────────────────────
+        window.askDelete = function(id) {
+        const ev = currentEvents.find(e => e.id === id);
+        if (!ev) return;
+        pendingDeleteId = id;
+        document.getElementById('deleteModalText').textContent = '¿Seguro que querés eliminar "' + ev.name + ' · ' + ev.day + '"?';
+        document.getElementById('deleteModal').classList.add('open');
+        }
+        window.confirmDelete = function() {
+        if (!pendingDeleteId) return;
+        const ev = currentEvents.find(e => e.id === pendingDeleteId);
+        const filtered = currentEvents.filter(e => e.id !== pendingDeleteId);
 
-function release(id) {
-  if (!isAdmin) return;
-  const events = getEvents();
-  const ev = events.find(e => e.id === id);
-  if (!ev) return;
-  addLog('Admin', 'liberó el turno de', ev.name + ' · ' + ev.day + ' (era: ' + ev.employee + ')');
-  ev.status = 'libre';
-  ev.employee = '';
-  save(EVENTS_KEY, events);
-  render();
-}
+        let nuevoLog = [...currentLog];
+        if (ev) {
+        nuevoLog.unshift({ name: 'Admin', action: 'eliminó el evento', event: ev.name + ' · ' + ev.day, time: ts() });
+        }
+        if (nuevoLog.length > 40) nuevoLog.pop();
 
-function addLog(name, action, event) {
-  const log = getLog();
-  log.unshift({ name, action, event, time: ts() });
-  if (log.length > 40) log.pop();
-  save(LOG_KEY, log);
-}
+        actualizarBaseDeDatos(filtered, nuevoLog);
+        pendingDeleteId = null;
+        closeModal('deleteModal');
+        }
 
-// ── RENDER ────────────────────────────────────────────────────
-function render() {
-  const events = getEvents();
-  const log    = getLog();
-  const grid   = document.getElementById('eventsGrid');
-  const logList= document.getElementById('logList');
+        // ── CLAIM / RELEASE ───────────────────────────────────────────
+        window.claim = function(id) {
+        const input = document.getElementById('inp-' + id);
+        const name = input ? input.value.trim() : '';
+        if (!name) { if (input) { input.style.borderColor = 'rgba(229,48,48,0.7)'; input.focus(); } return; }
 
-  grid.innerHTML = '';
+        const nuevosEventos = currentEvents.map(ev => {
+        if (ev.id === id && ev.status !== 'tomado') {
+        return { ...ev, status: 'tomado', employee: name };
+        }
+        return ev;
+        });
 
-  if (!events.length) {
-    grid.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.2);font-size:0.88rem;">No hay eventos cargados todavía.</div>';
-  }
+        const evOriginal = currentEvents.find(e => e.id === id);
+        if (!evOriginal || evOriginal.status === 'tomado') return;
 
-  events.forEach(ev => {
-    const taken = ev.status === 'tomado';
-    const card  = document.createElement('div');
-    card.className = 'card' + (taken ? ' taken' : '');
+        const nuevoLog = [{ name, action: 'tomó el turno de', event: evOriginal.name + ' · ' + evOriginal.day, time: ts() }, ...currentLog];
+        if (nuevoLog.length > 40) nuevoLog.pop();
 
-    let rightHTML = '';
-    if (!taken) {
-      rightHTML = `
+        actualizarBaseDeDatos(nuevosEventos, nuevoLog);
+        }
+
+        window.release = function(id) {
+        if (!isAdmin) return;
+
+        const evOriginal = currentEvents.find(e => e.id === id);
+        if (!evOriginal) return;
+
+        const nuevosEventos = currentEvents.map(ev => {
+        if (ev.id === id) {
+        return { ...ev, status: 'libre', employee: '' };
+        }
+        return ev;
+        });
+
+        const nuevoLog = [{ name: 'Admin', action: 'liberó el turno de', event: evOriginal.name + ' · ' + evOriginal.day + ' (era: ' + evOriginal.employee + ')', time: ts() }, ...currentLog];
+        if (nuevoLog.length > 40) nuevoLog.pop();
+
+        actualizarBaseDeDatos(nuevosEventos, nuevoLog);
+        }
+
+        // ── RENDER ────────────────────────────────────────────────────
+        function render() {
+        const grid = document.getElementById('eventsGrid');
+        const logList = document.getElementById('logList');
+        if(!grid || !logList) return;
+
+        grid.innerHTML = '';
+
+        if (!currentEvents.length) {
+        grid.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.2);font-size:0.88rem;">No hay eventos cargados todavía.</div>';
+        }
+
+        currentEvents.forEach(ev => {
+        const taken = ev.status === 'tomado';
+        const card = document.createElement('div');
+        card.className = 'card' + (taken ? ' taken' : '');
+
+        let rightHTML = '';
+        if (!taken) {
+        rightHTML = `
         <input class="claim-input" id="inp-${ev.id}" placeholder="Tu nombre"
-               onkeydown="if(event.key==='Enter')claim(${ev.id})">
-        <button class="btn btn-primary" onclick="claim(${ev.id})">Tomar turno</button>
-      `;
-    } else {
-      rightHTML = `<span style="font-size:0.75rem;color:rgba(255,255,255,0.25);">Turno bloqueado</span>`;
-      if (isAdmin) {
-        rightHTML += `<button class="btn btn-sm btn-danger" onclick="release(${ev.id})">Liberar</button>`;
-      }
-    }
+        onkeydown="if(event.key==='Enter')window.claim(${ev.id})">
+        <button class="btn btn-primary" onclick="window.claim(${ev.id})">Tomar turno</button>
+        `;
+        } else {
+        rightHTML = `<span style="font-size:0.75rem;color:rgba(255,255,255,0.25);">Turno bloqueado</span>`;
+        if (isAdmin) {
+        rightHTML += `<button class="btn btn-sm btn-danger" onclick="window.release(${ev.id})">Liberar</button>`;
+        }
+        }
 
-    let deleteBtn = isAdmin
-      ? `<button class="btn btn-sm" style="color:rgba(255,48,48,0.5);border-color:rgba(255,48,48,0.15);" onclick="askDelete(${ev.id})" title="Eliminar evento">✕</button>`
-      : '';
+        let deleteBtn = isAdmin
+        ? `<button class="btn btn-sm" style="color:rgba(255,48,48,0.5);border-color:rgba(255,48,48,0.15);" onclick="window.askDelete(${ev.id})" title="Eliminar evento">✕</button>`
+        : '';
 
-    card.innerHTML = `
-      <div class="card-left">
+        card.innerHTML = `
+        <div class="card-left">
         <div class="event-name">${ev.name}</div>
         <div class="event-meta">
-          <span class="meta-item">📅 ${ev.day}</span>
-          <span class="meta-item">🕐 ${ev.time}</span>
+        <span class="meta-item">📅 ${ev.day}</span>
+        <span class="meta-item">🕐 ${ev.time}</span>
         </div>
         ${taken
-          ? `<span class="badge-tomado">● Tomado</span>
-             <div class="employee-name">👤 ${ev.employee}</div>`
-          : `<span class="badge-libre">● Disponible</span>`
+        ? `<span class="badge-tomado">● Tomado</span>
+        <div class="employee-name">👤 ${ev.employee}</div>`
+        : `<span class="badge-libre">● Disponible</span>`
         }
-      </div>
-      <div class="card-right">
+        </div>
+        <div class="card-right">
         ${rightHTML}
         ${deleteBtn}
-      </div>
-    `;
-    grid.appendChild(card);
-  });
+        </div>
+        `;
+        grid.appendChild(card);
+        });
 
-  logList.innerHTML = '';
-  if (!log.length) {
-    logList.innerHTML = '<div class="log-empty">Sin actividad todavía.</div>';
-  } else {
-    log.slice(0, 15).forEach(entry => {
-      const item = document.createElement('div');
-      item.className = 'log-item';
-      item.innerHTML = `
+        logList.innerHTML = '';
+        if (!currentLog.length) {
+        logList.innerHTML = '<div class="log-empty">Sin actividad todavía.</div>';
+        } else {
+        currentLog.slice(0, 15).forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `
         <span class="log-text"><strong>${entry.name}</strong> ${entry.action} <em>${entry.event}</em></span>
         <span class="log-time">${entry.time}</span>
-      `;
-      logList.appendChild(item);
-    });
-  }
-}
+        `;
+        logList.appendChild(item);
+        });
+        }
+        }
 
-// ── INIT ──────────────────────────────────────────────────────
-// cerrar modales con Escape
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    closeModal('adminModal');
-    closeModal('deleteModal');
-  }
-});
+        // ── INIT ──────────────────────────────────────────────────────
+        document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+        closeModal('adminModal');
+        closeModal('deleteModal');
+        }
+        });
 
-// restaurar sesión admin si la tenía
-if (load(SESSION_KEY, false)) { isAdmin = true; }
-applyRole();
-</script>
+        try {
+        if (localStorage.getItem(SESSION_KEY) === "true") { isAdmin = true; }
+        } catch {}
+        applyRole();
+    </script>
 </body>
 </html>
